@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>地震防災系統</title>
     <style>
         :root {
@@ -12,23 +12,24 @@
             --card-bg: #ffffff;
         }
 
-        body {
-            font-family: "Microsoft JhengHei", -apple-system, BlinkMacSystemFont, sans-serif;
+        body, html {
+            font-family: "Microsoft JhengHei", -apple-system, sans-serif;
             margin: 0;
             padding: 0;
             background-color: var(--bg-color);
             color: #333;
-            /* 確保網頁可以根據內容自然延伸 */
-            overflow-y: auto;
+            /* 修正手機滑動平滑度 */
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
         }
 
-        /* 分頁導覽列 - 固定在頂部 */
+        /* 導覽列 */
         .nav-tabs {
             display: flex;
             background: var(--primary-color);
             position: sticky;
             top: 0;
-            z-index: 1000;
+            z-index: 2000;
             box-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
 
@@ -41,7 +42,7 @@
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: 0.3s;
         }
 
         .tab-btn.active {
@@ -61,7 +62,7 @@
             display: block;
         }
 
-        /* 統計卡片區域 */
+        /* 統計卡片 */
         .summary-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -95,7 +96,7 @@
             color: var(--primary-color);
         }
 
-        /* 按鈕樣式 */
+        /* 更新按鈕 */
         .btn-refresh {
             width: 100%;
             padding: 14px;
@@ -142,27 +143,23 @@
             color: #4a5568;
         }
 
-        /* --- 重要：表單填寫分頁優化 --- */
+        /* 表單填報頁優化 (解決手機滑動不順) */
         .form-wrapper {
             width: 100%;
-            /* 移除固定高度限制，讓外部容器隨內容伸縮 */
-            display: block;
+            /* 讓父層決定高度，iframe 內不產生捲軸 */
+            overflow: hidden; 
         }
 
         #google-form-iframe {
             width: 100%;
-            /* 設定足夠的高度以容納整個表單，避免出現內部垂直捲軸 */
-            /* 根據您的表單長度，1800px 通常足以涵蓋大部分表單，可依實際需求微調 */
-            height: 1800px; 
+            height: 1850px; /* 預設足夠高度 */
             border: none;
             display: block;
-            overflow: hidden; /* 禁止 iframe 內部產生捲軸 */
         }
 
         @media (max-width: 600px) {
             #google-form-iframe {
-                /* 手機版表單通常會變長，適度增加高度 */
-                height: 2200px;
+                height: 2250px; /* 手機端表單會拉長，設定更高 */
             }
         }
 
@@ -176,43 +173,40 @@
 </head>
 <body>
 
-    <!-- 導覽切換 -->
     <div class="nav-tabs">
         <button class="tab-btn active" onclick="openTab('report')">📊 防災統計回報</button>
         <button class="tab-btn" onclick="openTab('form')">📝 表單填寫</button>
     </div>
 
-    <!-- 分頁：防災統計回報 -->
+    <!-- 分頁 1: 統計回報 -->
     <div id="report" class="content-section active">
         <button class="btn-refresh" onclick="fetchSheetData()">🔄 更新統計資料</button>
         
-        <div id="loading-text">正在讀取最新數據...</div>
+        <div id="loading-text">資料讀取中...</div>
 
-        <!-- 5個關鍵統計數據 (J3, J5, J7, J9, J11) -->
         <div class="summary-grid">
             <div class="summary-card">
-                <div class="summary-label">學生應到</div>
+                <div class="summary-label">學生應到 (J4)</div>
                 <div id="j3-val" class="summary-value">-</div>
             </div>
             <div class="summary-card">
-                <div class="summary-label">學生實到</div>
+                <div class="summary-label">學生實到 (J6)</div>
                 <div id="j5-val" class="summary-value">-</div>
             </div>
             <div class="summary-card">
-                <div class="summary-label">避難引導組</div>
+                <div class="summary-label">避難引導組 (J8)</div>
                 <div id="j7-val" class="summary-value">-</div>
             </div>
             <div class="summary-card highlight">
-                <div class="summary-label">全校應到人數</div>
+                <div class="summary-label">全校應到人數 (J10)</div>
                 <div id="j9-val" class="summary-value" style="color: #c0392b;">-</div>
             </div>
             <div class="summary-card highlight">
-                <div class="summary-label">實到人數合計</div>
+                <div class="summary-label">實到人數合計 (J11)</div>
                 <div id="j11-val" class="summary-value" style="color: #c0392b;">-</div>
             </div>
         </div>
 
-        <!-- A1:I25 表格 -->
         <div class="table-container">
             <table id="data-table">
                 <thead id="table-head"></thead>
@@ -221,11 +215,16 @@
         </div>
     </div>
 
-    <!-- 分頁：表單填寫 -->
+    <!-- 分頁 2: 表單填寫 -->
     <div id="form" class="content-section">
         <div class="form-wrapper">
-            <!-- 嵌入 Google 表單，透過 style 強制高度 -->
-            <iframe id="google-form-iframe" src="https://docs.google.com/forms/d/e/1FAIpQLSeAjANhLbeBUucLKlwIBEo3qAtZCVoMfjUFSgkObdBp9JbEJg/viewform?embedded=true" frameborder="0" marginheight="0" marginwidth="0">載入中…</iframe>
+            <!-- 加上 scrolling="no" 強制讓外層網頁處理滑動 -->
+            <iframe id="google-form-iframe" 
+                    src="https://docs.google.com/forms/d/e/1FAIpQLSeAjANhLbeBUucLKlwIBEo3qAtZCVoMfjUFSgkObdBp9JbEJg/viewform?embedded=true" 
+                    frameborder="0" 
+                    marginheight="0" 
+                    marginwidth="0" 
+                    scrolling="no">載入中…</iframe>
         </div>
     </div>
 
@@ -239,9 +238,7 @@
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             event.currentTarget.classList.add('active');
-            
-            // 切換分頁時將捲軸拉回頂部，優化使用者體驗
-            window.scrollTo(0, 0);
+            window.scrollTo(0, 0); // 切換時自動回到頂部
         }
 
         function parseCSV(text) {
@@ -259,28 +256,33 @@
             loader.style.display = 'block';
 
             try {
-                const response = await fetch(DATA_URL, { cache: "no-cache" });
+                const response = await fetch(DATA_URL, { cache: "no-store" });
                 const csvText = await response.text();
                 const data = parseCSV(csvText);
 
                 renderStats(data);
                 renderTable(data);
             } catch (error) {
-                console.error('Fetch error:', error);
-                alert('無法讀取試算表，請確認權限是否已設為「知道連結的任何人都能查看」。');
+                console.error('Error:', error);
+                alert('無法讀取資料，請檢查網路或權限。');
             } finally {
                 loader.style.display = 'none';
             }
         }
 
         function renderStats(rows) {
-            const getJ = (rowIdx) => (rows[rowIdx] && rows[rowIdx][9]) ? rows[rowIdx][9] : '0';
+            // J 欄索引為 9 (A=0, B=1... J=9)
+            // 試算表列數轉索引 (列數-1)
+            const getVal = (rowNum) => {
+                return (rows[rowNum-1] && rows[rowNum-1][9]) ? rows[rowNum-1][9] : '0';
+            };
             
-            document.getElementById('j3-val').innerText = getJ(2);
-            document.getElementById('j5-val').innerText = getJ(4);
-            document.getElementById('j7-val').innerText = getJ(6);
-            document.getElementById('j9-val').innerText = getJ(8);
-            document.getElementById('j11-val').innerText = getJ(10);
+            // 根據您的需求：
+            document.getElementById('j3-val').innerText = getVal(4);  // 顯示 J4
+            document.getElementById('j5-val').innerText = getVal(6);  // 顯示 J6
+            document.getElementById('j7-val').innerText = getVal(8);  // 顯示 J8
+            document.getElementById('j9-val').innerText = getVal(10); // 顯示 J10
+            document.getElementById('j11-val').innerText = getVal(11); // 顯示 J11
         }
 
         function renderTable(rows) {
@@ -290,7 +292,7 @@
             tbody.innerHTML = '';
 
             const maxRows = Math.min(rows.length, 25);
-            const maxCols = 9; // A-I 欄
+            const maxCols = 9; // A-I
 
             for (let i = 0; i < maxRows; i++) {
                 const tr = document.createElement('tr');
