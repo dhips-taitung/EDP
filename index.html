@@ -7,154 +7,173 @@
     <style>
         :root {
             --primary-color: #2c3e50;
-            --accent-color: #e74c3c;
-            --bg-color: #f4f7f6;
+            --accent-color: #d35400;
+            --bg-color: #f8f9fa;
         }
 
         body {
-            font-family: "Microsoft JhengHei", Arial, sans-serif;
+            font-family: "Microsoft JhengHei", -apple-system, sans-serif;
             margin: 0;
             padding: 0;
             background-color: var(--bg-color);
         }
 
-        /* 導覽列與分頁控制 */
-        .tabs {
+        /* 分頁導覽 */
+        .nav-tabs {
             display: flex;
             background: var(--primary-color);
             position: sticky;
             top: 0;
             z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
 
         .tab-btn {
             flex: 1;
-            padding: 15px;
+            padding: 15px 5px;
             border: none;
             background: none;
-            color: white;
+            color: #bdc3c7;
             font-size: 16px;
+            font-weight: bold;
             cursor: pointer;
             transition: 0.3s;
         }
 
         .tab-btn.active {
-            background: #34495e;
+            color: white;
             border-bottom: 4px solid #3498db;
-            font-weight: bold;
+            background: rgba(255,255,255,0.1);
         }
 
         .content-section {
             display: none;
             padding: 15px;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
         .content-section.active {
             display: block;
         }
 
-        /* 關鍵數據顯示區 */
-        .summary-grid {
+        /* 統計卡片設計 */
+        .summary-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 10px;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
             margin-bottom: 20px;
         }
 
-        .summary-item {
+        .summary-card {
             background: white;
             padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
             text-align: center;
-            border-left: 5px solid #3498db;
+            border-top: 4px solid #3498db;
         }
 
-        .summary-item .label { font-size: 14px; color: #666; }
-        .summary-item .value { font-size: 20px; font-weight: bold; color: var(--accent-color); margin-top: 5px; }
+        .card-total { border-top-color: #e74c3c; } /* 強調合計項 */
 
-        /* 表格樣式 */
-        .table-container {
+        .summary-label { font-size: 13px; color: #7f8c8d; margin-bottom: 5px; }
+        .summary-value { font-size: 22px; font-weight: bold; color: var(--primary-color); }
+
+        /* 表格樣式優化 */
+        .table-wrapper {
             overflow-x: auto;
             background: white;
             border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 800px; /* 確保在手機上可捲動而非壓縮 */
+            min-width: 700px;
         }
 
         th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
+            border: 1px solid #eee;
+            padding: 12px 8px;
             text-align: center;
             font-size: 14px;
         }
 
-        th { background-color: #ecf0f1; position: sticky; top: 0; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
+        th { background-color: #f2f4f6; color: #34495e; font-weight: 600; }
+        tr:nth-child(even) { background-color: #fafafa; }
 
-        /* 按鈕優化 */
-        .refresh-btn {
+        /* 按鈕樣式 */
+        .btn-refresh {
+            width: 100%;
+            padding: 12px;
             background: #27ae60;
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-bottom: 15px;
-            width: 100%;
+            border-radius: 6px;
             font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: 0.2s;
         }
+        .btn-refresh:active { transform: scale(0.98); background: #219150; }
 
-        .refresh-btn:hover { background: #219150; }
-
-        /* 表單嵌入 */
-        .iframe-container {
-            position: relative;
-            width: 100%;
+        /* 表單容器 */
+        .form-container {
             height: 85vh;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
+        iframe { width: 100%; height: 100%; border: none; }
 
-        /* 讀取中動畫 */
-        #loader { text-align: center; padding: 20px; display: none; }
+        /* 載入中動畫 */
+        #loading { text-align: center; color: #7f8c8d; padding: 20px; display: none; }
     </style>
 </head>
 <body>
 
-    <div class="tabs">
-        <button class="tab-btn active" onclick="showTab('report')">防災統計回報</button>
-        <button class="tab-btn" onclick="showTab('form')">表單填寫</button>
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('report')">📊 防災統計回報</button>
+        <button class="tab-btn" onclick="switchTab('form')">📝 表單填寫</button>
     </div>
 
-    <!-- 分頁 1: 防災統計回報 -->
+    <!-- 分頁 1: 統計回報 -->
     <div id="report" class="content-section active">
-        <button class="refresh-btn" onclick="fetchData()">🔄 更新統計資料</button>
+        <button class="btn-refresh" onclick="loadData()">🔄 點此更新統計數據</button>
         
-        <div id="loader">讀取資料中...</div>
+        <div id="loading">讀取最新資料中...</div>
 
-        <!-- 關鍵數據摘要 (J3, J5, J7, J9, J11) -->
-        <div class="summary-grid" id="summaryArea">
-            <div class="summary-item"><div class="label">學生應到</div><div id="j3" class="value">-</div></div>
-            <div class="summary-item"><div class="label">學生實到</div><div id="j5" class="value">-</div></div>
-            <div class="summary-item"><div class="label">避難引導組</div><div id="j7" class="value">-</div></div>
-            <div class="summary-item"><div class="label">全校應到</div><div id="j9" class="value">-</div></div>
-            <div class="summary-item"><div class="label">實到合計</div><div id="j11" class="value">-</div></div>
+        <!-- 5大統計摘要 (從 J 欄提取) -->
+        <div class="summary-container">
+            <div class="summary-card">
+                <div class="summary-label">學生應到 (J3)</div>
+                <div id="val-j3" class="summary-value">-</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">學生實到 (J5)</div>
+                <div id="val-j5" class="summary-value">-</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">避難引導組 (J7)</div>
+                <div id="val-j7" class="summary-value">-</div>
+            </div>
+            <div class="summary-card card-total">
+                <div class="summary-label">全校應到 (J9)</div>
+                <div id="val-j9" class="summary-value" style="color:#e74c3c">-</div>
+            </div>
+            <div class="summary-card card-total">
+                <div class="summary-label">實到合計 (J11)</div>
+                <div id="val-j11" class="summary-value" style="color:#e74c3c">-</div>
+            </div>
         </div>
 
-        <!-- 完整 A1:J25 表格 -->
-        <div class="table-container">
-            <table id="dataTable">
-                <thead><tr id="tableHead"></tr></thead>
+        <!-- A1:I25 表格內容 -->
+        <div class="table-wrapper">
+            <table id="mainTable">
+                <thead id="tableHead"></thead>
                 <tbody id="tableBody"></tbody>
             </table>
         </div>
@@ -162,98 +181,96 @@
 
     <!-- 分頁 2: 表單填寫 -->
     <div id="form" class="content-section">
-        <div class="iframe-container">
-            <!-- 已將網址轉換為嵌入式連結 -->
-            <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSdUuXf2fN8wXN08q8rK_wZ6Xn8_XW-D-O1E9m_n08O-z_X-mQ/viewform?embedded=true">載入中…</iframe>
+        <div class="form-container">
+            <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSeAjANhLbeBUucLKlwIBEo3qAtZCVoMfjUFSgkObdBp9JbEJg/viewform?embedded=true">載入中…</iframe>
         </div>
     </div>
 
     <script>
-        const sheetId = '179cZdIStY7za1WDwqGtA302kO1Llws0NHXRW69lOfB0';
-        const sheetName = encodeURIComponent('防災統計回報');
-        const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${sheetName}`;
+        const sheetID = '179cZdIStY7za1WDwqGtA302kO1Llws0NHXRW69lOfB0';
+        const gid = '0'; // 預設工作表
+        const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?tqx=out:csv`;
 
-        // 分頁切換
-        function showTab(tabId) {
+        // 切換分頁
+        function switchTab(id) {
             document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
+            document.getElementById(id).classList.add('active');
             event.currentTarget.classList.add('active');
         }
 
-        // 讀取試算表資料
-        async function fetchData() {
-            const loader = document.getElementById('loader');
+        // 讀取 CSV
+        async function loadData() {
+            const loader = document.getElementById('loading');
             loader.style.display = 'block';
             
             try {
                 const response = await fetch(csvUrl);
-                const data = await response.text();
-                const rows = parseCSV(data);
+                const text = await response.text();
+                const rows = parseCSV(text);
                 
-                renderSummary(rows);
-                renderTable(rows);
-            } catch (error) {
-                console.error('Error:', error);
-                alert('無法讀取資料，請檢查試算表權限設定。');
+                updateStats(rows);
+                updateTable(rows);
+            } catch (err) {
+                console.error(err);
+                alert('資料讀取失敗，請確認網路連線或試算表權限。');
             } finally {
                 loader.style.display = 'none';
             }
         }
 
-        // 解析 CSV (處理包含逗號的單元格)
-        function parseCSV(text) {
-            const lines = text.split('\n');
-            return lines.map(line => {
-                const parts = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                return parts.map(part => part.replace(/^"|"$/g, '').trim());
+        // 解析 CSV 格式
+        function parseCSV(data) {
+            const result = [];
+            const lines = data.split('\n');
+            lines.forEach(line => {
+                const cells = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                result.push(cells.map(c => c.replace(/^"|"$/g, '').trim()));
             });
+            return result;
         }
 
-        // 渲染摘要數據 (J3:J11 為索引 [row][9])
-        function renderSummary(rows) {
-            // 試算表 J 欄索引是 9 (A=0, B=1...)
-            // 試算表第 3 列索引是 2 (1-based to 0-based)
-            const safeGet = (r, c) => (rows[r] && rows[r][c]) ? rows[r][c] : '0';
+        // 更新 5 個統計數值 (J 欄索引為 9)
+        function updateStats(rows) {
+            const getVal = (r, c) => (rows[r] && rows[r][c]) ? rows[r][c] : '0';
             
-            document.getElementById('j3').innerText = safeGet(2, 9);
-            document.getElementById('j5').innerText = safeGet(4, 9);
-            document.getElementById('j7').innerText = safeGet(6, 9);
-            document.getElementById('j9').innerText = safeGet(8, 9);
-            document.getElementById('j11').innerText = safeGet(10, 9);
+            document.getElementById('val-j3').innerText = getVal(2, 9);  // J3
+            document.getElementById('val-j5').innerText = getVal(4, 9);  // J5
+            document.getElementById('val-j7').innerText = getVal(6, 9);  // J7
+            document.getElementById('val-j9').innerText = getVal(8, 9);  // J9
+            document.getElementById('val-j11').innerText = getVal(10, 9); // J11
         }
 
-        // 渲染 A1:J25 表格
-        function renderTable(rows) {
-            const head = document.getElementById('tableHead');
-            const body = document.getElementById('tableBody');
-            head.innerHTML = '';
-            body.innerHTML = '';
+        // 更新表格 (顯示 A1:I25)
+        function updateTable(rows) {
+            const thead = document.getElementById('tableHead');
+            const tbody = document.getElementById('tableBody');
+            thead.innerHTML = '';
+            tbody.innerHTML = '';
 
-            // 限制在 A1:J25 (25列, 10欄)
-            const rowLimit = Math.min(rows.length, 25);
-            const colLimit = 10; 
+            const maxRows = Math.min(rows.length, 25);
+            const maxCols = 9; // A 到 I 欄
 
-            rows.slice(0, rowLimit).forEach((row, rowIndex) => {
+            for (let i = 0; i < maxRows; i++) {
                 const tr = document.createElement('tr');
-                for (let i = 0; i < colLimit; i++) {
-                    const cellValue = row[i] || '';
-                    if (rowIndex === 0) {
+                for (let j = 0; j < maxCols; j++) {
+                    const cellVal = rows[i][j] || '';
+                    if (i === 0) {
                         const th = document.createElement('th');
-                        th.innerText = cellValue;
-                        head.appendChild(th);
+                        th.innerText = cellVal;
+                        thead.appendChild(th);
                     } else {
                         const td = document.createElement('td');
-                        td.innerText = cellValue;
+                        td.innerText = cellVal;
                         tr.appendChild(td);
                     }
                 }
-                if (rowIndex !== 0) body.appendChild(tr);
-            });
+                if (i > 0) tbody.appendChild(tr);
+            }
         }
 
-        // 初始載入
-        window.onload = fetchData;
+        // 頁面載入後自動執行
+        window.onload = loadData;
     </script>
 </body>
 </html>
