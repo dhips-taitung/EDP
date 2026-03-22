@@ -8,57 +8,65 @@
         :root {
             --primary-color: #2c3e50;
             --accent-color: #d35400;
-            --bg-color: #f8f9fa;
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
         }
 
         body {
-            font-family: "Microsoft JhengHei", -apple-system, sans-serif;
+            font-family: "Microsoft JhengHei", -apple-system, BlinkMacSystemFont, sans-serif;
             margin: 0;
             padding: 0;
             background-color: var(--bg-color);
+            color: #333;
         }
 
-        /* 分頁導覽 */
+        /* 分頁導覽列 */
         .nav-tabs {
             display: flex;
             background: var(--primary-color);
             position: sticky;
             top: 0;
             z-index: 1000;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
 
         .tab-btn {
             flex: 1;
-            padding: 15px 5px;
+            padding: 16px 5px;
             border: none;
             background: none;
             color: #bdc3c7;
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            transition: 0.3s;
+            transition: all 0.3s ease;
         }
 
         .tab-btn.active {
             color: white;
+            background: rgba(255,255,255,0.15);
             border-bottom: 4px solid #3498db;
-            background: rgba(255,255,255,0.1);
         }
 
         .content-section {
             display: none;
             padding: 15px;
-            max-width: 1200px;
+            max-width: 1000px;
             margin: 0 auto;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .content-section.active {
             display: block;
         }
 
-        /* 統計卡片設計 */
-        .summary-container {
+        /* 統計卡片區域 */
+        .summary-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
             gap: 12px;
@@ -66,202 +74,248 @@
         }
 
         .summary-card {
-            background: white;
+            background: var(--card-bg);
             padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
             text-align: center;
-            border-top: 4px solid #3498db;
+            border-top: 5px solid #3498db;
         }
 
-        .card-total { border-top-color: #e74c3c; } /* 強調合計項 */
+        .summary-card.highlight {
+            border-top-color: #e74c3c;
+        }
 
-        .summary-label { font-size: 13px; color: #7f8c8d; margin-bottom: 5px; }
-        .summary-value { font-size: 22px; font-weight: bold; color: var(--primary-color); }
+        .summary-label {
+            font-size: 13px;
+            color: #7f8c8d;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
 
-        /* 表格樣式優化 */
-        .table-wrapper {
+        .summary-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        /* 按鈕優化 */
+        .btn-refresh {
+            width: 100%;
+            padding: 14px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #1e8449;
+            transition: 0.1s;
+        }
+
+        .btn-refresh:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 #1e8449;
+        }
+
+        /* 表格容器與響應式處理 */
+        .table-container {
             overflow-x: auto;
             background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 700px;
+            min-width: 750px; /* 確保小螢幕可捲動 */
         }
 
         th, td {
-            border: 1px solid #eee;
-            padding: 12px 8px;
+            border: 1px solid #edf2f7;
+            padding: 12px 10px;
             text-align: center;
             font-size: 14px;
         }
 
-        th { background-color: #f2f4f6; color: #34495e; font-weight: 600; }
-        tr:nth-child(even) { background-color: #fafafa; }
-
-        /* 按鈕樣式 */
-        .btn-refresh {
-            width: 100%;
-            padding: 12px;
-            background: #27ae60;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
+        th {
+            background-color: #f8fafc;
+            color: #4a5568;
             font-weight: bold;
-            margin-bottom: 20px;
-            cursor: pointer;
-            transition: 0.2s;
+            position: sticky;
+            top: 0;
         }
-        .btn-refresh:active { transform: scale(0.98); background: #219150; }
 
-        /* 表單容器 */
-        .form-container {
+        tr:nth-child(even) { background-color: #fdfdfd; }
+        tr:hover { background-color: #f1f5f9; }
+
+        /* Google 表單嵌入容器 */
+        .form-wrapper {
+            width: 100%;
             height: 85vh;
-            border-radius: 8px;
+            background: white;
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
 
-        iframe { width: 100%; height: 100%; border: none; }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
 
-        /* 載入中動畫 */
-        #loading { text-align: center; color: #7f8c8d; padding: 20px; display: none; }
+        #loading-text {
+            text-align: center;
+            padding: 20px;
+            color: #95a5a6;
+            display: none;
+        }
     </style>
 </head>
 <body>
 
+    <!-- 導覽切換 -->
     <div class="nav-tabs">
-        <button class="tab-btn active" onclick="switchTab('report')">📊 防災統計回報</button>
-        <button class="tab-btn" onclick="switchTab('form')">📝 表單填寫</button>
+        <button class="tab-btn active" onclick="openTab('report')">📊 防災統計回報</button>
+        <button class="tab-btn" onclick="openTab('form')">📝 表單填寫</button>
     </div>
 
-    <!-- 分頁 1: 統計回報 -->
+    <!-- 分頁：防災統計回報 -->
     <div id="report" class="content-section active">
-        <button class="btn-refresh" onclick="loadData()">🔄 點此更新統計數據</button>
+        <button class="btn-refresh" onclick="fetchSheetData()">🔄 更新統計資料</button>
         
-        <div id="loading">讀取最新資料中...</div>
+        <div id="loading-text">正在讀取試算表...</div>
 
-        <!-- 5大統計摘要 (從 J 欄提取) -->
-        <div class="summary-container">
+        <!-- 5個關鍵統計數據 (J3, J5, J7, J9, J11) -->
+        <div class="summary-grid">
             <div class="summary-card">
                 <div class="summary-label">學生應到 (J3)</div>
-                <div id="val-j3" class="summary-value">-</div>
+                <div id="j3-val" class="summary-value">-</div>
             </div>
             <div class="summary-card">
                 <div class="summary-label">學生實到 (J5)</div>
-                <div id="val-j5" class="summary-value">-</div>
+                <div id="j5-val" class="summary-value">-</div>
             </div>
             <div class="summary-card">
                 <div class="summary-label">避難引導組 (J7)</div>
-                <div id="val-j7" class="summary-value">-</div>
+                <div id="j7-val" class="summary-value">-</div>
             </div>
-            <div class="summary-card card-total">
-                <div class="summary-label">全校應到 (J9)</div>
-                <div id="val-j9" class="summary-value" style="color:#e74c3c">-</div>
+            <div class="summary-card highlight">
+                <div class="summary-label">全校應到人數 (J9)</div>
+                <div id="j9-val" class="summary-value" style="color: #c0392b;">-</div>
             </div>
-            <div class="summary-card card-total">
-                <div class="summary-label">實到合計 (J11)</div>
-                <div id="val-j11" class="summary-value" style="color:#e74c3c">-</div>
+            <div class="summary-card highlight">
+                <div class="summary-label">實到人數合計 (J11)</div>
+                <div id="j11-val" class="summary-value" style="color: #c0392b;">-</div>
             </div>
         </div>
 
-        <!-- A1:I25 表格內容 -->
-        <div class="table-wrapper">
-            <table id="mainTable">
-                <thead id="tableHead"></thead>
-                <tbody id="tableBody"></tbody>
+        <!-- A1:I25 完整表格 -->
+        <div class="table-container">
+            <table id="data-table">
+                <thead id="table-head"></thead>
+                <tbody id="table-body"></tbody>
             </table>
         </div>
     </div>
 
-    <!-- 分頁 2: 表單填寫 -->
+    <!-- 分頁：表單填寫 -->
     <div id="form" class="content-section">
-        <div class="form-container">
+        <div class="form-wrapper">
+            <!-- 嵌入您指定的 Google 表單 -->
             <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSeAjANhLbeBUucLKlwIBEo3qAtZCVoMfjUFSgkObdBp9JbEJg/viewform?embedded=true">載入中…</iframe>
         </div>
     </div>
 
     <script>
-        const sheetID = '179cZdIStY7za1WDwqGtA302kO1Llws0NHXRW69lOfB0';
-        const gid = '0'; // 預設工作表
-        const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?tqx=out:csv`;
+        // 設定區
+        const SHEET_ID = '179cZdIStY7za1WDwqGtA302kO1Llws0NHXRW69lOfB0';
+        const SHEET_NAME = '防災統計回報';
+        // 使用 CSV 導出格式獲取資料
+        const DATA_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
 
-        // 切換分頁
-        function switchTab(id) {
-            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
+        // 分頁切換功能
+        function openTab(tabId) {
+            document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
             event.currentTarget.classList.add('active');
         }
 
-        // 讀取 CSV
-        async function loadData() {
-            const loader = document.getElementById('loading');
+        // 解析 CSV 格式
+        function parseCSV(text) {
+            const rows = [];
+            const lines = text.split('\n');
+            for (let line of lines) {
+                // 處理包含逗號的引號字串
+                const cells = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                rows.push(cells.map(c => c.replace(/^"|"$/g, '').trim()));
+            }
+            return rows;
+        }
+
+        // 讀取並渲染資料
+        async function fetchSheetData() {
+            const loader = document.getElementById('loading-text');
             loader.style.display = 'block';
-            
+
             try {
-                const response = await fetch(csvUrl);
-                const text = await response.text();
-                const rows = parseCSV(text);
-                
-                updateStats(rows);
-                updateTable(rows);
-            } catch (err) {
-                console.error(err);
-                alert('資料讀取失敗，請確認網路連線或試算表權限。');
+                // 加入 cache: "no-store" 確保每次按更新都是抓最新的
+                const response = await fetch(DATA_URL, { cache: "no-store" });
+                const csvText = await response.text();
+                const data = parseCSV(csvText);
+
+                renderStats(data);
+                renderTable(data);
+            } catch (error) {
+                console.error('Fetch error:', error);
+                alert('無法讀取試算表資料，請確認試算表權限已開啟「知道連結的任何人都能查看」。');
             } finally {
                 loader.style.display = 'none';
             }
         }
 
-        // 解析 CSV 格式
-        function parseCSV(data) {
-            const result = [];
-            const lines = data.split('\n');
-            lines.forEach(line => {
-                const cells = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                result.push(cells.map(c => c.replace(/^"|"$/g, '').trim()));
-            });
-            return result;
+        // 渲染 5 項統計數值
+        function renderStats(rows) {
+            const getJ = (rowIdx) => {
+                // J 欄是第 10 欄 (索引 9)
+                return (rows[rowIdx] && rows[rowIdx][9]) ? rows[rowIdx][9] : '0';
+            };
+
+            // 試算表第 3 列對應索引 2，依此類推
+            document.getElementById('j3-val').innerText = getJ(2);  // J3: 學生應到
+            document.getElementById('j5-val').innerText = getJ(4);  // J5: 學生實到
+            document.getElementById('j7-val').innerText = getJ(6);  // J7: 避難引導組
+            document.getElementById('j9-val').innerText = getJ(8);  // J9: 全校應到人數
+            document.getElementById('j11-val').innerText = getJ(10); // J11: 實到人數合計
         }
 
-        // 更新 5 個統計數值 (J 欄索引為 9)
-        function updateStats(rows) {
-            const getVal = (r, c) => (rows[r] && rows[r][c]) ? rows[r][c] : '0';
-            
-            document.getElementById('val-j3').innerText = getVal(2, 9);  // J3
-            document.getElementById('val-j5').innerText = getVal(4, 9);  // J5
-            document.getElementById('val-j7').innerText = getVal(6, 9);  // J7
-            document.getElementById('val-j9').innerText = getVal(8, 9);  // J9
-            document.getElementById('val-j11').innerText = getVal(10, 9); // J11
-        }
-
-        // 更新表格 (顯示 A1:I25)
-        function updateTable(rows) {
-            const thead = document.getElementById('tableHead');
-            const tbody = document.getElementById('tableBody');
+        // 渲染 A1:I25 表格
+        function renderTable(rows) {
+            const thead = document.getElementById('table-head');
+            const tbody = document.getElementById('table-body');
             thead.innerHTML = '';
             tbody.innerHTML = '';
 
             const maxRows = Math.min(rows.length, 25);
-            const maxCols = 9; // A 到 I 欄
+            const maxCols = 9; // A 到 I 欄 (索引 0-8)
 
             for (let i = 0; i < maxRows; i++) {
                 const tr = document.createElement('tr');
                 for (let j = 0; j < maxCols; j++) {
-                    const cellVal = rows[i][j] || '';
+                    const content = rows[i][j] || '';
                     if (i === 0) {
                         const th = document.createElement('th');
-                        th.innerText = cellVal;
+                        th.innerText = content;
                         thead.appendChild(th);
                     } else {
                         const td = document.createElement('td');
-                        td.innerText = cellVal;
+                        td.innerText = content;
                         tr.appendChild(td);
                     }
                 }
@@ -269,8 +323,8 @@
             }
         }
 
-        // 頁面載入後自動執行
-        window.onload = loadData;
+        // 初始化
+        window.onload = fetchSheetData;
     </script>
 </body>
 </html>
