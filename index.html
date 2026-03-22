@@ -18,9 +18,8 @@
             padding: 0;
             background-color: var(--bg-color);
             color: #333;
-            /* 修正手機滑動平滑度 */
             scroll-behavior: smooth;
-            -webkit-overflow-scrolling: touch;
+            -webkit-overflow-scrolling: touch; /* 優化 iOS 滑動 */
         }
 
         /* 導覽列 */
@@ -54,7 +53,7 @@
         .content-section {
             display: none;
             padding: 15px;
-            max-width: 1000px;
+            max-width: 1100px;
             margin: 0 auto;
         }
 
@@ -128,38 +127,38 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 750px;
+            min-width: 900px; /* 增加寬度以容納所有欄位 */
         }
 
         th, td {
             border: 1px solid #edf2f7;
-            padding: 12px 10px;
+            padding: 12px 8px;
             text-align: center;
             font-size: 14px;
         }
 
         th {
             background-color: #f8fafc;
-            color: #4a5568;
+            color: #34495e;
+            white-space: nowrap;
         }
 
-        /* 表單填報頁優化 (解決手機滑動不順) */
+        /* 表單頁優化 */
         .form-wrapper {
             width: 100%;
-            /* 讓父層決定高度，iframe 內不產生捲軸 */
             overflow: hidden; 
         }
 
         #google-form-iframe {
             width: 100%;
-            height: 1850px; /* 預設足夠高度 */
+            height: 1900px; /* 預設高度 */
             border: none;
             display: block;
         }
 
         @media (max-width: 600px) {
             #google-form-iframe {
-                height: 2250px; /* 手機端表單會拉長，設定更高 */
+                height: 2350px; /* 手機版表單高度補償 */
             }
         }
 
@@ -184,6 +183,7 @@
         
         <div id="loading-text">資料讀取中...</div>
 
+        <!-- 5大統計數值 (顯示 J4, J6, J8, J10, J11) -->
         <div class="summary-grid">
             <div class="summary-card">
                 <div class="summary-label">學生應到</div>
@@ -207,6 +207,7 @@
             </div>
         </div>
 
+        <!-- A1:I25 表格區 -->
         <div class="table-container">
             <table id="data-table">
                 <thead id="table-head"></thead>
@@ -218,7 +219,6 @@
     <!-- 分頁 2: 表單填寫 -->
     <div id="form" class="content-section">
         <div class="form-wrapper">
-            <!-- 加上 scrolling="no" 強制讓外層網頁處理滑動 -->
             <iframe id="google-form-iframe" 
                     src="https://docs.google.com/forms/d/e/1FAIpQLSeAjANhLbeBUucLKlwIBEo3qAtZCVoMfjUFSgkObdBp9JbEJg/viewform?embedded=true" 
                     frameborder="0" 
@@ -233,12 +233,15 @@
         const SHEET_NAME = '防災統計回報';
         const DATA_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
 
+        // 指定的 A-I 欄位名稱
+        const COLUMN_HEADERS = ["班級", "男生", "女生", "應到人數", "失蹤人數", "請假人數", "實到人數", "失蹤學生名單", "受傷學生名單"];
+
         function openTab(tabId) {
             document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             event.currentTarget.classList.add('active');
-            window.scrollTo(0, 0); // 切換時自動回到頂部
+            window.scrollTo(0, 0); 
         }
 
         function parseCSV(text) {
@@ -264,20 +267,19 @@
                 renderTable(data);
             } catch (error) {
                 console.error('Error:', error);
-                alert('無法讀取資料，請檢查網路或權限。');
+                alert('讀取失敗，請確認網路連線或試算表共用權限。');
             } finally {
                 loader.style.display = 'none';
             }
         }
 
+        // 數據抓取：J 欄為索引 9
         function renderStats(rows) {
-            // J 欄索引為 9 (A=0, B=1... J=9)
-            // 試算表列數轉索引 (列數-1)
             const getVal = (rowNum) => {
+                // 列號 4 對應索引 3 (rows[3])
                 return (rows[rowNum-1] && rows[rowNum-1][9]) ? rows[rowNum-1][9] : '0';
             };
             
-            // 根據您的需求：
             document.getElementById('j3-val').innerText = getVal(4);  // 顯示 J4
             document.getElementById('j5-val').innerText = getVal(6);  // 顯示 J6
             document.getElementById('j7-val').innerText = getVal(8);  // 顯示 J8
@@ -291,24 +293,27 @@
             thead.innerHTML = '';
             tbody.innerHTML = '';
 
-            const maxRows = Math.min(rows.length, 25);
-            const maxCols = 9; // A-I
+            // 1. 生成表頭 (使用指定的硬編碼標題)
+            const hr = document.createElement('tr');
+            COLUMN_HEADERS.forEach(headerText => {
+                const th = document.createElement('th');
+                th.innerText = headerText;
+                hr.appendChild(th);
+            });
+            thead.appendChild(hr);
 
-            for (let i = 0; i < maxRows; i++) {
+            // 2. 生成內容 (跳過試算表的第一列標題，從第二列開始抓取，上限 25 列)
+            const maxRows = Math.min(rows.length, 25);
+            const maxCols = 9; // A-I 欄
+
+            for (let i = 1; i < maxRows; i++) {
                 const tr = document.createElement('tr');
                 for (let j = 0; j < maxCols; j++) {
-                    const content = rows[i][j] || '';
-                    if (i === 0) {
-                        const th = document.createElement('th');
-                        th.innerText = content;
-                        thead.appendChild(th);
-                    } else {
-                        const td = document.createElement('td');
-                        td.innerText = content;
-                        tr.appendChild(td);
-                    }
+                    const td = document.createElement('td');
+                    td.innerText = rows[i][j] || '';
+                    tr.appendChild(td);
                 }
-                if (i > 0) tbody.appendChild(tr);
+                tbody.appendChild(tr);
             }
         }
 
