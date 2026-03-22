@@ -18,9 +18,11 @@
             padding: 0;
             background-color: var(--bg-color);
             color: #333;
+            /* 確保網頁可以根據內容自然延伸 */
+            overflow-y: auto;
         }
 
-        /* 分頁導覽列 */
+        /* 分頁導覽列 - 固定在頂部 */
         .nav-tabs {
             display: flex;
             background: var(--primary-color);
@@ -53,12 +55,6 @@
             padding: 15px;
             max-width: 1000px;
             margin: 0 auto;
-            animation: fadeIn 0.5s;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
         }
 
         .content-section.active {
@@ -99,7 +95,7 @@
             color: var(--primary-color);
         }
 
-        /* 按鈕優化 */
+        /* 按鈕樣式 */
         .btn-refresh {
             width: 100%;
             padding: 14px;
@@ -112,15 +108,14 @@
             margin-bottom: 20px;
             cursor: pointer;
             box-shadow: 0 4px 0 #1e8449;
-            transition: 0.1s;
         }
 
         .btn-refresh:active {
-            transform: translateY(3px);
-            box-shadow: 0 1px 0 #1e8449;
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #1e8449;
         }
 
-        /* 表格容器與響應式處理 */
+        /* 表格容器 */
         .table-container {
             overflow-x: auto;
             background: white;
@@ -132,7 +127,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 750px; /* 確保小螢幕可捲動 */
+            min-width: 750px;
         }
 
         th, td {
@@ -145,28 +140,30 @@
         th {
             background-color: #f8fafc;
             color: #4a5568;
-            font-weight: bold;
-            position: sticky;
-            top: 0;
         }
 
-        tr:nth-child(even) { background-color: #fdfdfd; }
-        tr:hover { background-color: #f1f5f9; }
-
-        /* Google 表單嵌入容器 */
+        /* --- 重要：表單填寫分頁優化 --- */
         .form-wrapper {
             width: 100%;
-            height: 85vh;
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            /* 移除固定高度限制，讓外部容器隨內容伸縮 */
+            display: block;
         }
 
-        iframe {
+        #google-form-iframe {
             width: 100%;
-            height: 100%;
+            /* 設定足夠的高度以容納整個表單，避免出現內部垂直捲軸 */
+            /* 根據您的表單長度，1800px 通常足以涵蓋大部分表單，可依實際需求微調 */
+            height: 1800px; 
             border: none;
+            display: block;
+            overflow: hidden; /* 禁止 iframe 內部產生捲軸 */
+        }
+
+        @media (max-width: 600px) {
+            #google-form-iframe {
+                /* 手機版表單通常會變長，適度增加高度 */
+                height: 2200px;
+            }
         }
 
         #loading-text {
@@ -189,7 +186,7 @@
     <div id="report" class="content-section active">
         <button class="btn-refresh" onclick="fetchSheetData()">🔄 更新統計資料</button>
         
-        <div id="loading-text">正在讀取試算表...</div>
+        <div id="loading-text">正在讀取最新數據...</div>
 
         <!-- 5個關鍵統計數據 (J3, J5, J7, J9, J11) -->
         <div class="summary-grid">
@@ -215,7 +212,7 @@
             </div>
         </div>
 
-        <!-- A1:I25 完整表格 -->
+        <!-- A1:I25 表格 -->
         <div class="table-container">
             <table id="data-table">
                 <thead id="table-head"></thead>
@@ -227,46 +224,42 @@
     <!-- 分頁：表單填寫 -->
     <div id="form" class="content-section">
         <div class="form-wrapper">
-            <!-- 嵌入您指定的 Google 表單 -->
-            <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSeAjANhLbeBUucLKlwIBEo3qAtZCVoMfjUFSgkObdBp9JbEJg/viewform?embedded=true">載入中…</iframe>
+            <!-- 嵌入 Google 表單，透過 style 強制高度 -->
+            <iframe id="google-form-iframe" src="https://docs.google.com/forms/d/e/1FAIpQLSeAjANhLbeBUucLKlwIBEo3qAtZCVoMfjUFSgkObdBp9JbEJg/viewform?embedded=true" frameborder="0" marginheight="0" marginwidth="0">載入中…</iframe>
         </div>
     </div>
 
     <script>
-        // 設定區
         const SHEET_ID = '179cZdIStY7za1WDwqGtA302kO1Llws0NHXRW69lOfB0';
         const SHEET_NAME = '防災統計回報';
-        // 使用 CSV 導出格式獲取資料
         const DATA_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
 
-        // 分頁切換功能
         function openTab(tabId) {
             document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             event.currentTarget.classList.add('active');
+            
+            // 切換分頁時將捲軸拉回頂部，優化使用者體驗
+            window.scrollTo(0, 0);
         }
 
-        // 解析 CSV 格式
         function parseCSV(text) {
             const rows = [];
             const lines = text.split('\n');
             for (let line of lines) {
-                // 處理包含逗號的引號字串
                 const cells = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                 rows.push(cells.map(c => c.replace(/^"|"$/g, '').trim()));
             }
             return rows;
         }
 
-        // 讀取並渲染資料
         async function fetchSheetData() {
             const loader = document.getElementById('loading-text');
             loader.style.display = 'block';
 
             try {
-                // 加入 cache: "no-store" 確保每次按更新都是抓最新的
-                const response = await fetch(DATA_URL, { cache: "no-store" });
+                const response = await fetch(DATA_URL, { cache: "no-cache" });
                 const csvText = await response.text();
                 const data = parseCSV(csvText);
 
@@ -274,28 +267,22 @@
                 renderTable(data);
             } catch (error) {
                 console.error('Fetch error:', error);
-                alert('無法讀取試算表資料，請確認試算表權限已開啟「知道連結的任何人都能查看」。');
+                alert('無法讀取試算表，請確認權限是否已設為「知道連結的任何人都能查看」。');
             } finally {
                 loader.style.display = 'none';
             }
         }
 
-        // 渲染 5 項統計數值
         function renderStats(rows) {
-            const getJ = (rowIdx) => {
-                // J 欄是第 10 欄 (索引 9)
-                return (rows[rowIdx] && rows[rowIdx][9]) ? rows[rowIdx][9] : '0';
-            };
-
-            // 試算表第 3 列對應索引 2，依此類推
-            document.getElementById('j3-val').innerText = getJ(2);  // J3: 學生應到
-            document.getElementById('j5-val').innerText = getJ(4);  // J5: 學生實到
-            document.getElementById('j7-val').innerText = getJ(6);  // J7: 避難引導組
-            document.getElementById('j9-val').innerText = getJ(8);  // J9: 全校應到人數
-            document.getElementById('j11-val').innerText = getJ(10); // J11: 實到人數合計
+            const getJ = (rowIdx) => (rows[rowIdx] && rows[rowIdx][9]) ? rows[rowIdx][9] : '0';
+            
+            document.getElementById('j3-val').innerText = getJ(2);
+            document.getElementById('j5-val').innerText = getJ(4);
+            document.getElementById('j7-val').innerText = getJ(6);
+            document.getElementById('j9-val').innerText = getJ(8);
+            document.getElementById('j11-val').innerText = getJ(10);
         }
 
-        // 渲染 A1:I25 表格
         function renderTable(rows) {
             const thead = document.getElementById('table-head');
             const tbody = document.getElementById('table-body');
@@ -303,7 +290,7 @@
             tbody.innerHTML = '';
 
             const maxRows = Math.min(rows.length, 25);
-            const maxCols = 9; // A 到 I 欄 (索引 0-8)
+            const maxCols = 9; // A-I 欄
 
             for (let i = 0; i < maxRows; i++) {
                 const tr = document.createElement('tr');
@@ -323,7 +310,6 @@
             }
         }
 
-        // 初始化
         window.onload = fetchSheetData;
     </script>
 </body>
