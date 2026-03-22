@@ -1,52 +1,71 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>地震防災資訊平台</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 0; }
-    .tabs { display: flex; background: #2c3e50; }
-    .tab { flex: 1; padding: 15px; text-align: center; color: white; cursor: pointer; }
-    .tab.active { background: #34495e; }
-    .content { display: none; padding: 20px; }
-    .content.active { display: block; }
-    iframe { width: 100%; border: none; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>地震防災資訊</title>
+<style>
+body{font-family:Arial;margin:0;padding:0}
+.tabs{display:flex;background:#333}
+.tabs button{flex:1;padding:14px;color:#fff;background:#333;border:none;cursor:pointer}
+.tabs button.active{background:#555}
+.tab-content{display:none;padding:10px}
+.tab-content.active{display:block}
+table{border-collapse:collapse;width:100%}
+th,td{border:1px solid #ccc;padding:6px;text-align:center}
+button.refresh{margin:10px 0;padding:8px 12px}
+iframe{width:100%;height:600px;border:none}
+</style>
 </head>
 <body>
 
 <div class="tabs">
-  <div class="tab active" onclick="showTab(0)">防災資料</div>
-  <div class="tab" onclick="showTab(1)">填寫回報</div>
+<button class="tab-btn active" onclick="openTab('data')">防災資料</button>
+<button class="tab-btn" onclick="openTab('form')">填寫表單</button>
 </div>
 
-<div class="content active">
-  <h2>防災統計回報資料</h2>
-  <iframe 
-    src="https://docs.google.com/spreadsheets/d/179cZdIStY7za1WDwqGtA302kO1Llws0NHXRW69lOfB0/gviz/tq?tqx=out:html&sheet=防災統計回報" 
-    height="600">
-  </iframe>
+<div id="data" class="tab-content active">
+<h2>防災統計回報</h2>
+<button class="refresh" onclick="loadData()">更新資料</button>
+<table id="data-table"></table>
 </div>
 
-<div class="content">
-  <h2>填寫防災回報表單</h2>
-  <iframe 
-    src="https://forms.gle/rCjutDzpHVmPoNNh6" 
-    height="800">
-  </iframe>
+<div id="form" class="tab-content">
+<h2>填寫防災回報表單</h2>
+<iframe src="https://docs.google.com/forms/d/e/1FAIpQLSf/formResponse?embedded=true"></iframe>
 </div>
 
 <script>
-function showTab(index) {
-  const tabs = document.querySelectorAll('.tab');
-  const contents = document.querySelectorAll('.content');
-
-  tabs.forEach((tab, i) => {
-    tab.classList.toggle('active', i === index);
-    contents[i].classList.toggle('active', i === index);
-  });
+function openTab(tab){
+ document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
+ document.querySelectorAll('.tab-btn').forEach(el=>el.classList.remove('active'));
+ document.getElementById(tab).classList.add('active');
+ event.target.classList.add('active');
 }
+
+const sheetURL = "https://docs.google.com/spreadsheets/d/179cZdIStY7za1WDwqGtA302kO1Llws0NHXRW69lOfB0/gviz/tq?tqx=out:json&sheet=防災統計回報";
+
+function loadData(){
+ fetch(sheetURL)
+ .then(res=>res.text())
+ .then(data=>{
+   const json = JSON.parse(data.substr(47).slice(0,-2));
+   const rows = json.table.rows;
+   let html = "";
+
+   rows.forEach((r,i)=>{
+     html += "<tr>";
+     r.c.forEach(c=>{
+       html += `<td>${c?c.v:""}</td>`;
+     });
+     html += "</tr>";
+   });
+
+   document.getElementById("data-table").innerHTML = html;
+ });
+}
+
+loadData();
 </script>
 
 </body>
