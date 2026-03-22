@@ -1,83 +1,128 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<title>防災資訊網</title>
-<style>
-body {font-family: Arial, sans-serif; margin: 20px;}
-.tab {overflow: hidden; border-bottom: 1px solid #ccc;}
-.tab button {background-color: inherit; border: none; outline: none; padding: 10px 20px; cursor: pointer;}
-.tab button.active {border-bottom: 2px solid #007bff; font-weight: bold;}
-.tabcontent {display: none; padding: 20px 0;}
-table {border-collapse: collapse; width: 100%; margin-top: 10px;}
-th, td {border: 1px solid #ccc; padding: 8px; text-align: left;}
-th {background-color: #f2f2f2;}
-button.updateBtn {padding: 6px 12px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 4px;}
-button.updateBtn:hover {background-color: #0056b3;}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地震防災系統</title>
+    <!-- 引入 Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root { --primary-color: #d9534f; }
+        body { background-color: #f8f9fa; font-family: "Microsoft JhengHei", sans-serif; }
+        .nav-link { color: #555; font-weight: bold; }
+        .nav-pills .nav-link.active { background-color: var(--primary-color); }
+        .container-fluid { max-width: 1200px; padding-top: 20px; }
+        
+        /* 試算表表格優化 */
+        #data-table-container { overflow-x: auto; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        table { font-size: 0.9rem; }
+        th { background-color: #f1f1f1 !important; white-space: nowrap; }
+
+        /* 嵌入表單優化 */
+        .iframe-container {
+            position: relative;
+            width: 100%;
+            height: 80vh;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        iframe { width: 100%; height: 100%; border: none; }
+        
+        /* 讀取動畫 */
+        .loader { display: none; text-align: center; padding: 20px; }
+    </style>
 </head>
 <body>
 
-<h2>防災資訊網</h2>
+<nav class="navbar navbar-dark bg-dark">
+    <div class="container-fluid justify-content-center">
+        <span class="navbar-brand mb-0 h1">地震防災資訊系統</span>
+    </div>
+</nav>
 
-<div class="tab">
-  <button class="tablinks active" onclick="openTab(event,'earthquake')">地震防災</button>
-  <button class="tablinks" onclick="openTab(event,'form')">防災回報表單</button>
+<div class="container-fluid">
+    <!-- 分頁按鈕 -->
+    <ul class="nav nav-pills mb-3 justify-content-center" id="pills-tab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="pills-data-tab" data-bs-toggle="pill" data-bs-target="#pills-data" type="button" role="tab">防災統計回報</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="pills-form-tab" data-bs-toggle="pill" data-bs-target="#pills-form" type="button" role="tab">填寫回報表單</button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="pills-tabContent">
+        <!-- 分頁 1: 試算表資料 -->
+        <div class="tab-pane fade show active" id="pills-data" role="tabpanel">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h5 class="mb-0">最新回報資料 (A1:J25)</h5>
+                <button class="btn btn-sm btn-outline-primary" onclick="loadSheetData()">🔄 更新按鈕</button>
+            </div>
+            <div id="loader" class="loader">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p>資料讀取中...</p>
+            </div>
+            <div id="data-table-container">
+                <!-- 資料會顯示在這裡 -->
+                <table class="table table-hover table-bordered mb-0" id="display-table"></table>
+            </div>
+        </div>
+
+        <!-- 分頁 2: Google 表單 -->
+        <div class="tab-pane fade" id="pills-form" role="tabpanel">
+            <div class="iframe-container">
+                <!-- 直接嵌入 Google 表單連結 -->
+                <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSe-0lD9WJ1Z8N3-5e_C9K_XnF6K5V_n0-pXGvR_S-oEwXv9yg/viewform?embedded=true">載入中…</iframe>
+            </div>
+        </div>
+    </div>
 </div>
 
-<div id="earthquake" class="tabcontent" style="display:block;">
-  <button class="updateBtn" onclick="loadData()">更新資料</button>
-  <div id="dataTableContainer">
-    <p>資料載入中...</p>
-  </div>
-</div>
-
-<div id="form" class="tabcontent">
-  <iframe src="https://docs.google.com/forms/d/e/rCjutDzpHVmPoNNh6/viewform?embedded=true" width="100%" height="800" frameborder="0" marginheight="0" marginwidth="0">載入中…</iframe>
-</div>
+<!-- 引入 Bootstrap JS & jQuery (用於資料讀取) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-function openTab(evt, tabName) {
-  var i, tabcontent, tablinks;
-  tabcontent = document.getElementsByClassName("tabcontent");
-  for(i=0;i<tabcontent.length;i++){tabcontent[i].style.display="none";}
-  tablinks = document.getElementsByClassName("tablinks");
-  for(i=0;i<tablinks.length;i++){tablinks[i].className = tablinks[i].className.replace(" active","");}
-  document.getElementById(tabName).style.display="block";
-  evt.currentTarget.className += " active";
-}
+    const spreadsheetId = '179cZdIStY7za1WDwqGtA302kO1Llws0NHXRW69lOfB0';
+    const sheetName = '防災統計回報';
+    const range = 'A1:J25';
 
-// 讀取試算表資料 (A1:J25)
-function loadData(){
-  const container = document.getElementById("dataTableContainer");
-  container.innerHTML = "<p>資料載入中...</p>";
+    // 讀取 Google 試算表資料
+    function loadSheetData() {
+        const loader = document.getElementById('loader');
+        const tableContainer = document.getElementById('display-table');
+        loader.style.display = 'block';
+        tableContainer.innerHTML = '';
 
-  const spreadsheetId = "179cZdIStY7za1WDwqGtA302kO1Llws0NHXRW69lOfB0"; // <- 替換成你的試算表ID
-  const range = "防災統計回報!A1:J25";
+        // 使用 Google Visualization API (GViz) 讀取資料
+        const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:html&sheet=${encodeURIComponent(sheetName)}&range=${range}`;
 
-  fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}?key=1RpX43TwTZInyjte27ISYd8JfDzzXwjOCN4pOimiqr6c`)
-  .then(res=>res.json())
-  .then(data=>{
-    if(!data.values){container.innerHTML="<p>無資料</p>"; return;}
-    let table = "<table><tr>";
-    data.values[0].forEach(h=>{table+="<th>"+h+"</th>";});
-    table+="</tr>";
-    for(let i=1;i<data.values.length;i++){
-      table+="<tr>";
-      data.values[i].forEach(c=>{table+="<td>"+(c||"")+"</td>";});
-      table+="</tr>";
+        fetch(url)
+            .then(response => response.text())
+            .then(data => {
+                // 解析回傳的 HTML 表格內容
+                const parser = new DOMParser();
+                const htmlDoc = parser.parseFromString(data, 'text/html');
+                const table = htmlDoc.querySelector('table');
+                
+                // 清理 Google 預設樣式並加入 Bootstrap 樣式
+                table.setAttribute('class', 'table table-hover table-bordered mb-0');
+                table.removeAttribute('border');
+                table.removeAttribute('cellspacing');
+                table.removeAttribute('cellpadding');
+
+                tableContainer.innerHTML = table.outerHTML;
+                loader.style.display = 'none';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                tableContainer.innerHTML = '<div class="alert alert-danger">資料讀取失敗，請檢查網路或試算表權限。</div>';
+                loader.style.display = 'none';
+            });
     }
-    table+="</table>";
-    container.innerHTML = table;
-  })
-  .catch(err=>{
-    console.error(err);
-    container.innerHTML="<p>資料載入失敗</p>";
-  });
-}
 
-// 頁面載入時自動抓一次
-window.onload = loadData;
+    // 頁面載入時執行一次
+    window.onload = loadSheetData;
 </script>
 
 </body>
