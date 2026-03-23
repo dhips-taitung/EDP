@@ -145,16 +145,17 @@
 
         /* 表單頁優化 */
         .form-wrapper {
-            width: 100%;
-            overflow: hidden; 
-        }
+    width: 100%;
+    height: 80vh;   /* 關鍵：用視窗高度 */
+    overflow: auto; /* 允許滾動 */
+    -webkit-overflow-scrolling: touch;
+}
 
-        #google-form-iframe {
-            width: 100%;
-            height: 2000px; /* 預設高度 */
-            border: none;
-            overflow: auto;
-        }
+#google-form-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
 
         @media (max-width: 600px) {
             #google-form-iframe {
