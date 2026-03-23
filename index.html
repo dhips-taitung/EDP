@@ -234,7 +234,7 @@
         const DATA_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
 
         // 指定的 A-I 欄位名稱
-        const COLUMN_HEADERS = ["班級", "男生", "女生", "應到人數", "失蹤人數", "請假人數", "實到人數", "失蹤學生名單", "受傷學生名單"];
+        const COLUMN_HEADERS = ["班級", "男生", "女生", "應到人數", "實到人數", "失蹤人數", "請假人數", "失蹤學生名單", "受傷學生名單"];
 
         function openTab(tabId) {
             document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
