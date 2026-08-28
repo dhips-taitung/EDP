@@ -19,7 +19,7 @@
             background-color: var(--bg-color);
             color: #333;
             scroll-behavior: smooth;
-            -webkit-overflow-scrolling: touch; /* 優化 iOS 滑動 */
+            -webkit-overflow-scrolling: touch;
         }
 
         /* 導覽列 */
@@ -127,7 +127,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 900px; /* 增加寬度以容納所有欄位 */
+            min-width: 1000px;
         }
 
         th, td {
@@ -143,23 +143,22 @@
             white-space: nowrap;
         }
 
-        /* 表單頁優化 */
+        /* 表單頁滑動優化 */
         .form-wrapper {
-    width: 100%;
+            width: 100%;
+            overflow: hidden; /* 隱藏內部分捲軸，由外層網頁滑動 */
+        }
 
-    overflow: auto; /* 允許滾動 */
-    -webkit-overflow-scrolling: touch;
-}
-
-#google-form-iframe {
-    width: 100%;
-    height: 2200px;
-    border: none;
-}
+        #google-form-iframe {
+            width: 100%;
+            height: 2200px; /* PC端足夠高度 */
+            border: none;
+            display: block;
+        }
 
         @media (max-width: 600px) {
             #google-form-iframe {
-                height: 2350px; /* 手機版表單高度補償 */
+                height: 2500px; /* 手機端增加高度防止截斷 */
             }
         }
 
@@ -184,7 +183,7 @@
         
         <div id="loading-text">資料讀取中...</div>
 
-        <!-- 5大統計數值 (顯示 J4, J6, J8, J10, J11) -->
+        <!-- 5大統計數值 (顯示 J4, J6, J8, J10, J12) -->
         <div class="summary-grid">
             <div class="summary-card">
                 <div class="summary-label">全校應到人數</div>
@@ -192,15 +191,15 @@
             </div>
             <div class="summary-card">
                 <div class="summary-label">已請假人數</div>
-                <div id="j5-val" class="summary-value" style="color: #c0392b;>-</div>
+                <div id="j5-val" class="summary-value" style="color: #c0392b;">-</div>
             </div>
             <div class="summary-card highlight">
                 <div class="summary-label">未到校人數</div>
                 <div id="j7-val" class="summary-value" style="color: #c0392b;">-</div>
             </div>
-            <div class="summary-card highlight">
+            <div class="summary-card">
                 <div class="summary-label">全校實到人數</div>
-                <div id="j9-val" class="summary-value"">-</div>
+                <div id="j9-val" class="summary-value">-</div>
             </div>
             <div class="summary-card highlight">
                 <div class="summary-label">失蹤人數</div>
@@ -208,7 +207,6 @@
             </div>
         </div>
 
-        <!-- A1:I25 表格區 -->
         <div class="table-container">
             <table id="data-table">
                 <thead id="table-head"></thead>
@@ -234,7 +232,7 @@
         const SHEET_NAME = '防災統計回報';
         const DATA_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
 
-        // 指定的 A-I 欄位名稱
+        // 更新後的 A-I 欄位名稱
         const COLUMN_HEADERS = ["班級", "男生", "女生", "應到人數", "實到人數", "已請假人數", "未到校人數", "失蹤人數", "失蹤學生名單"];
 
         function openTab(tabId) {
@@ -261,6 +259,7 @@
 
             try {
                 const response = await fetch(DATA_URL, { cache: "no-store" });
+                if (!response.ok) throw new Error('Network response was not ok');
                 const csvText = await response.text();
                 const data = parseCSV(csvText);
 
@@ -268,24 +267,23 @@
                 renderTable(data);
             } catch (error) {
                 console.error('Error:', error);
-                alert('讀取失敗，請確認網路連線或試算表共用權限。');
+                alert('讀取失敗，請確認試算表已開啟「知道連結的任何人都能查看」權限。');
             } finally {
                 loader.style.display = 'none';
             }
         }
 
-        // 數據抓取：J 欄為索引 9
         function renderStats(rows) {
             const getVal = (rowNum) => {
-                // 列號 4 對應索引 3 (rows[3])
+                // J 欄為索引 9
                 return (rows[rowNum-1] && rows[rowNum-1][9]) ? rows[rowNum-1][9] : '0';
             };
             
-            document.getElementById('j3-val').innerText = getVal(4);  // 顯示 J4
-            document.getElementById('j5-val').innerText = getVal(6);  // 顯示 J6
-            document.getElementById('j7-val').innerText = getVal(8);  // 顯示 J8
-            document.getElementById('j9-val').innerText = getVal(10); // 顯示 J10
-            document.getElementById('j11-val').innerText = getVal(12); // 顯示 J12
+            document.getElementById('j3-val').innerText = getVal(4);   // 全校應到 (J4)
+            document.getElementById('j5-val').innerText = getVal(6);   // 已請假 (J6)
+            document.getElementById('j7-val').innerText = getVal(8);   // 未到校 (J8)
+            document.getElementById('j9-val').innerText = getVal(10);  // 全校實到 (J10)
+            document.getElementById('j11-val').innerText = getVal(12); // 失蹤人數 (J12)
         }
 
         function renderTable(rows) {
@@ -294,7 +292,7 @@
             thead.innerHTML = '';
             tbody.innerHTML = '';
 
-            // 1. 生成表頭 (使用指定的硬編碼標題)
+            // 生成自定義標題
             const hr = document.createElement('tr');
             COLUMN_HEADERS.forEach(headerText => {
                 const th = document.createElement('th');
@@ -303,11 +301,12 @@
             });
             thead.appendChild(hr);
 
-            // 2. 生成內容 (跳過試算表的第一列標題，從第二列開始抓取，上限 25 列)
-            const maxRows = Math.min(rows.length, 25);
+            // 生成內容 (跳過試算表第一列標題，從索引 1 開始)
+            const maxRows = Math.min(rows.length, 26); // A1:I25 加上標題共 26 列
             const maxCols = 9; // A-I 欄
 
             for (let i = 1; i < maxRows; i++) {
+                if (!rows[i] || rows[i].length === 0) continue;
                 const tr = document.createElement('tr');
                 for (let j = 0; j < maxCols; j++) {
                     const td = document.createElement('td');
