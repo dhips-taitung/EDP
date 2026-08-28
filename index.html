@@ -191,19 +191,19 @@
                 <div id="j3-val" class="summary-value">-</div>
             </div>
             <div class="summary-card">
-                <div class="summary-label">全校實到人數</div>
-                <div id="j5-val" class="summary-value">-</div>
+                <div class="summary-label">已請假人數</div>
+                <div id="j5-val" class="summary-value" style="color: #c0392b;>-</div>
             </div>
             <div class="summary-card highlight">
-                <div class="summary-label">失蹤人數</div>
+                <div class="summary-label">未到校人數</div>
                 <div id="j7-val" class="summary-value" style="color: #c0392b;">-</div>
             </div>
             <div class="summary-card highlight">
-                <div class="summary-label">受傷人數</div>
-                <div id="j9-val" class="summary-value" style="color: #c0392b;">-</div>
+                <div class="summary-label">全校實到人數</div>
+                <div id="j9-val" class="summary-value"">-</div>
             </div>
             <div class="summary-card highlight">
-                <div class="summary-label">請假人數</div>
+                <div class="summary-label">失蹤人數</div>
                 <div id="j11-val" class="summary-value" style="color: #c0392b;">-</div>
             </div>
         </div>
@@ -235,7 +235,7 @@
         const DATA_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
 
         // 指定的 A-I 欄位名稱
-        const COLUMN_HEADERS = ["班級", "男生", "女生", "應到人數", "實到人數", "失蹤人數", "請假人數", "失蹤學生名單", "受傷學生名單"];
+        const COLUMN_HEADERS = ["班級", "男生", "女生", "應到人數", "實到人數", "已請假人數", "未到校人數", "失蹤人數", "失蹤學生名單"];
 
         function openTab(tabId) {
             document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
