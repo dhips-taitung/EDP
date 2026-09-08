@@ -37,7 +37,7 @@
         .content-section { display: none; padding: 15px; max-width: 1200px; margin: 0 auto; }
         .content-section.active { display: block; }
 
-        /* 統計卡片 */
+        /* 統計數值卡片 */
         .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 15px; }
         .summary-card { background: var(--card-bg); padding: 12px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center; border-top: 4px solid #3498db; }
         .summary-card.highlight { border-top-color: #e74c3c; }
@@ -46,33 +46,36 @@
 
         .btn-refresh { width: 100%; padding: 14px; background: #27ae60; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; margin-bottom: 15px; cursor: pointer; }
 
-        /* --- 表格手機版寬度自動調整優化 --- */
+        /* --- 修正紅色框線區塊：手機全顯示優化 --- */
         .table-container { 
-            overflow-x: hidden; /* 強制不產生水平捲軸 */
+            overflow-x: hidden; 
             background: white; 
             border-radius: 10px; 
             box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
         }
         
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; } /* 固定寬度佈局 */
-        th, td { border: 1px solid #edf2f7; padding: 10px 2px; text-align: center; font-size: 14px; word-break: break-all; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; } 
+        th, td { border: 1px solid #edf2f7; padding: 10px 4px; text-align: center; font-size: 14px; word-break: break-all; }
         th { background-color: #f8fafc; color: #34495e; font-weight: bold; }
 
-        /* 針對手機螢幕的極致壓縮 (A-I 9欄全顯) */
+        /* 手機端 (極致壓縮以容納 9 欄) */
         @media (max-width: 600px) {
             .content-section { padding: 8px; }
             th, td { 
                 padding: 6px 1px; 
-                font-size: 10px; /* 縮小字體以容納 9 欄 */
-                letter-spacing: -0.5px;
+                font-size: 10px; /* 縮小字體至極限 */
+                letter-spacing: -0.8px; /* 緊縮字距 */
             }
-            /* 指定每欄比例，確保班級與名單有足夠空間，其餘數值欄位壓縮 */
-            th:nth-child(1), td:nth-child(1) { width: 15%; } /* 班級 */
-            th:nth-child(2), td:nth-child(2), th:nth-child(3), td:nth-child(3),
-            th:nth-child(4), td:nth-child(4), th:nth-child(5), td:nth-child(5),
-            th:nth-child(6), td:nth-child(6), th:nth-child(7), td:nth-child(7),
-            th:nth-child(8), td:nth-child(8) { width: 8.5%; } /* 男,女,應,實,假,未,失 */
-            th:nth-child(9), td:nth-child(9) { width: 25.5%; text-align: left; padding-left: 2px; } /* 名單 */
+            /* 欄位寬度百分比分配 */
+            th:nth-child(1), td:nth-child(1) { width: 14%; } /* 班級 */
+            th:nth-child(2), td:nth-child(2),
+            th:nth-child(3), td:nth-child(3),
+            th:nth-child(4), td:nth-child(4),
+            th:nth-child(5), td:nth-child(5),
+            th:nth-child(6), td:nth-child(6),
+            th:nth-child(7), td:nth-child(7),
+            th:nth-child(8), td:nth-child(8) { width: 9%; } /* 男,女,應,實,假,未,失 */
+            th:nth-child(9), td:nth-child(9) { width: 23%; text-align: left; } /* 名單 */
         }
 
         /* 表單設計 */
@@ -99,7 +102,7 @@
     <!-- 分頁 1: 統計回報 -->
     <div id="report" class="content-section active">
         <button class="btn-refresh" onclick="fetchSheetData()">🔄 更新統計資料</button>
-        <div id="loading-text">⚡ 正在即時同步班級統計數據...</div>
+        <div id="loading-text">⚡ 正在從試算表抓取即時數據...</div>
         
         <div class="summary-grid">
             <div class="summary-card"><div class="summary-label">全校應到人數</div><div id="j3-val" class="summary-value">-</div></div>
@@ -121,10 +124,7 @@
     <div id="form" class="content-section">
         <div class="custom-form">
             <div class="form-header"></div>
-            <div class="form-card">
-                <div class="form-title">地震防災人數統計</div>
-                <p style="font-size: 14px; color: #666;">填寫後請至回報頁確認數據。</p>
-            </div>
+            <div class="form-card"><div class="form-title">地震防災人數統計</div></div>
             <form id="main-form" onsubmit="handleFinalSubmit(event)">
                 <div class="form-card">
                     <label class="form-label">電子郵件 (選填)</label>
@@ -157,8 +157,8 @@
         const SHEET_ID = '179cZdIStY7za1WDwqGtA302kO1Llws0NHXRW69lOfB0';
         const SHEET_NAME = '防災統計回報';
         
-        // 修正：增加 Cache Buster (t=...)，確保抓到最新時間的資料
-        const getDataUrl = () => `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}&t=${new Date().getTime()}`;
+        // 讀取 CSV
+        const getDataUrl = () => `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}&t=${Date.now()}`;
         const COLUMN_HEADERS = ["班級", "男生", "女生", "應到", "實到", "請假", "未到", "失蹤", "失蹤名單"];
 
         function generateClasses() {
@@ -185,7 +185,7 @@
             const btn = document.getElementById('submit-btn');
             const status = document.getElementById('submit-status');
             btn.disabled = true;
-            btn.innerText = "正在同步數據...";
+            btn.innerText = "⚡ 正在同步試算表...";
 
             const params = new URLSearchParams();
             params.append("email", document.getElementById('email').value || "未填");
@@ -197,16 +197,18 @@
             try {
                 await fetch(GAS_URL, { method: "POST", mode: "no-cors", body: params });
                 status.style.display = "block";
-                status.innerText = "✓ 填報成功！";
+                status.style.backgroundColor = "#e6f4ea";
+                status.style.color = "#137333";
+                status.innerText = "✓ 填報成功！資料已強制排至最上方。";
                 setTimeout(() => {
                     status.style.display = "none";
                     document.getElementById('main-form').reset();
                     btn.disabled = false;
                     btn.innerText = "發送報表";
                     openTab('report');
-                    fetchSheetData(); // 即時重抓最新資料
-                }, 1000);
-            } catch (err) { alert("系統繁忙，請稍後再試"); btn.disabled = false; }
+                    fetchSheetData();
+                }, 1500);
+            } catch (err) { alert("錯誤：" + err); btn.disabled = false; }
         }
 
         async function fetchSheetData() {
@@ -240,11 +242,13 @@
             const tbody = document.getElementById('table-body');
             thead.innerHTML = ''; tbody.innerHTML = '';
             
+            // 標題列
             const hr = document.createElement('tr');
             COLUMN_HEADERS.forEach(h => { let th = document.createElement('th'); th.innerText = h; hr.appendChild(th); });
             thead.appendChild(hr);
 
-            // 重要：不進行 sort()，直接呈現試算表「防災統計回報」活頁簿的 A1:I25 內容
+            // 數據列 (讀取 A1:I25)
+            // 網頁端不進行時間排序，以維持「班級順序固定」
             const maxRows = Math.min(rows.length, 26);
             for (let i = 1; i < maxRows; i++) {
                 if (!rows[i] || rows[i].length < 2) continue;
