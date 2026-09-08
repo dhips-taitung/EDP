@@ -46,7 +46,7 @@
 
         .btn-refresh { width: 100%; padding: 14px; background: #27ae60; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; margin-bottom: 15px; cursor: pointer; }
 
-        /* --- 修正紅色框線區塊：手機全顯示優化 --- */
+        /* 表格自適應：手機全顯示優化 */
         .table-container { 
             overflow-x: hidden; 
             background: white; 
@@ -58,24 +58,19 @@
         th, td { border: 1px solid #edf2f7; padding: 10px 4px; text-align: center; font-size: 14px; word-break: break-all; }
         th { background-color: #f8fafc; color: #34495e; font-weight: bold; }
 
-        /* 手機端 (極致壓縮以容納 9 欄) */
+        /* 手機模式壓縮 (容納 9 欄) */
         @media (max-width: 600px) {
             .content-section { padding: 8px; }
-            th, td { 
-                padding: 6px 1px; 
-                font-size: 10px; /* 縮小字體至極限 */
-                letter-spacing: -0.8px; /* 緊縮字距 */
-            }
-            /* 欄位寬度百分比分配 */
-            th:nth-child(1), td:nth-child(1) { width: 14%; } /* 班級 */
+            th, td { padding: 6px 1px; font-size: 10px; letter-spacing: -0.8px; }
+            th:nth-child(1), td:nth-child(1) { width: 14%; }
             th:nth-child(2), td:nth-child(2),
             th:nth-child(3), td:nth-child(3),
             th:nth-child(4), td:nth-child(4),
             th:nth-child(5), td:nth-child(5),
             th:nth-child(6), td:nth-child(6),
             th:nth-child(7), td:nth-child(7),
-            th:nth-child(8), td:nth-child(8) { width: 9%; } /* 男,女,應,實,假,未,失 */
-            th:nth-child(9), td:nth-child(9) { width: 23%; text-align: left; } /* 名單 */
+            th:nth-child(8), td:nth-child(8) { width: 9%; }
+            th:nth-child(9), td:nth-child(9) { width: 23%; text-align: left; }
         }
 
         /* 表單設計 */
@@ -84,10 +79,22 @@
         .form-card { background: white; border: 1px solid #dadce0; border-radius: 8px; padding: 20px; margin-bottom: 12px; }
         .form-title { font-size: 24px; margin-bottom: 10px; }
         .form-label { display: block; font-weight: bold; margin-bottom: 8px; font-size: 16px; }
+        
         input[type="text"], input[type="number"], input[type="email"], select {
             width: 100%; padding: 10px 0; border: none; border-bottom: 1px solid #dadce0; font-size: 16px; outline: none; background: transparent;
         }
-        .btn-submit { background-color: var(--google-purple); color: white; padding: 12px 30px; border: none; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; }
+
+        .remember-wrap {
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: #555;
+            cursor: pointer;
+        }
+        .remember-wrap input { margin-right: 8px; width: 18px; height: 18px; }
+
+        .btn-submit { background-color: var(--google-purple); color: white; padding: 14px 30px; border: none; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
         #submit-status { margin-top: 15px; padding: 15px; display: none; border-radius: 8px; text-align: center; font-weight: bold; }
         #loading-text { text-align: center; padding: 10px; color: #95a5a6; display: none; }
     </style>
@@ -124,12 +131,21 @@
     <div id="form" class="content-section">
         <div class="custom-form">
             <div class="form-header"></div>
-            <div class="form-card"><div class="form-title">地震防災人數統計</div></div>
+            <div class="form-card">
+                <div class="form-title">地震防災人數統計</div>
+                <p style="font-size: 14px; color: #666;">填寫完成後資料將自動更新並排至試算表最上方。</p>
+            </div>
+            
             <form id="main-form" onsubmit="handleFinalSubmit(event)">
+                <!-- 電子郵件 + 記憶勾選 -->
                 <div class="form-card">
                     <label class="form-label">電子郵件 (選填)</label>
                     <input type="email" id="email" placeholder="您的電子郵件">
+                    <label class="remember-wrap">
+                        <input type="checkbox" id="remember-email"> 記住我的電子郵件
+                    </label>
                 </div>
+
                 <div class="form-card">
                     <label class="form-label">班級 <span>*</span></label>
                     <select id="class_name" required><option value="" disabled selected>請選擇</option></select>
@@ -153,13 +169,33 @@
     </div>
 
     <script>
+        // --- 請更換為您的 GAS 部署網址 ---
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzeAn6JE-EnI8ZgSHyHckTf2vWQGR-rA-NUrxuZCXeUbKZYcrUT6GVYPDhBU0QtIluD/exec"; 
         const SHEET_ID = '179cZdIStY7za1WDwqGtA302kO1Llws0NHXRW69lOfB0';
         const SHEET_NAME = '防災統計回報';
         
-        // 讀取 CSV
         const getDataUrl = () => `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}&t=${Date.now()}`;
         const COLUMN_HEADERS = ["班級", "男生", "女生", "應到", "實到", "請假", "未到", "失蹤", "失蹤名單"];
+
+        // 讀取本地端信箱
+        function loadSavedEmail() {
+            const savedEmail = localStorage.getItem('dhips_saved_email');
+            if (savedEmail) {
+                document.getElementById('email').value = savedEmail;
+                document.getElementById('remember-email').checked = true;
+            }
+        }
+
+        // 儲存或清除信箱
+        function manageEmailStorage() {
+            const emailValue = document.getElementById('email').value;
+            const isRememberChecked = document.getElementById('remember-email').checked;
+            if (isRememberChecked && emailValue) {
+                localStorage.setItem('dhips_saved_email', emailValue);
+            } else {
+                localStorage.removeItem('dhips_saved_email');
+            }
+        }
 
         function generateClasses() {
             const select = document.getElementById('class_name');
@@ -185,7 +221,10 @@
             const btn = document.getElementById('submit-btn');
             const status = document.getElementById('submit-status');
             btn.disabled = true;
-            btn.innerText = "⚡ 正在同步試算表...";
+            btn.innerText = "⚡ 正在發送資料...";
+
+            // 處理記憶信箱邏輯
+            manageEmailStorage();
 
             const params = new URLSearchParams();
             params.append("email", document.getElementById('email').value || "未填");
@@ -199,16 +238,22 @@
                 status.style.display = "block";
                 status.style.backgroundColor = "#e6f4ea";
                 status.style.color = "#137333";
-                status.innerText = "✓ 填報成功！資料已強制排至最上方。";
+                status.innerText = "✓ 填報成功！";
                 setTimeout(() => {
                     status.style.display = "none";
+                    // 重設表單，但保留 Email (如果有的話)
+                    const tempEmail = document.getElementById('email').value;
+                    const tempCheck = document.getElementById('remember-email').checked;
                     document.getElementById('main-form').reset();
+                    document.getElementById('email').value = tempEmail;
+                    document.getElementById('remember-email').checked = tempCheck;
+
                     btn.disabled = false;
                     btn.innerText = "發送報表";
                     openTab('report');
                     fetchSheetData();
                 }, 1500);
-            } catch (err) { alert("錯誤：" + err); btn.disabled = false; }
+            } catch (err) { alert("發生錯誤：" + err); btn.disabled = false; }
         }
 
         async function fetchSheetData() {
@@ -241,14 +286,9 @@
             const thead = document.getElementById('table-head');
             const tbody = document.getElementById('table-body');
             thead.innerHTML = ''; tbody.innerHTML = '';
-            
-            // 標題列
             const hr = document.createElement('tr');
             COLUMN_HEADERS.forEach(h => { let th = document.createElement('th'); th.innerText = h; hr.appendChild(th); });
             thead.appendChild(hr);
-
-            // 數據列 (讀取 A1:I25)
-            // 網頁端不進行時間排序，以維持「班級順序固定」
             const maxRows = Math.min(rows.length, 26);
             for (let i = 1; i < maxRows; i++) {
                 if (!rows[i] || rows[i].length < 2) continue;
@@ -262,7 +302,11 @@
             }
         }
 
-        window.onload = () => { generateClasses(); fetchSheetData(); };
+        window.onload = () => { 
+            generateClasses(); 
+            loadSavedEmail(); // 載入記憶信箱
+            fetchSheetData(); 
+        };
     </script>
 </body>
 </html>
