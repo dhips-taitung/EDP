@@ -55,48 +55,51 @@
             background: white; 
             border-radius: 10px; 
             box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
-            border: 1px solid var(--border-color);
         }
         
-        table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 850px; } 
+        /* 使用 collapse 確保 1px 邊框一致性 */
+        table { width: 100%; border-collapse: collapse; min-width: 850px; border: 1px solid var(--border-color); } 
 
         th, td { 
-            border-right: 1px solid var(--border-color); 
-            border-bottom: 1px solid var(--border-color); 
+            border: 1px solid var(--border-color); 
             padding: 12px 8px; 
             text-align: center; 
             font-size: 14px; 
             background: white;
         }
 
-        /* --- 電腦版樣式 (螢幕寬度足夠時) --- */
+        /* --- 電腦版樣式 (螢幕寬度 > 850px) --- */
         @media (min-width: 851px) {
-            /* 1. 電腦版標題凍結 */
+            /* 1. 電腦版標題凍結 (包含 A 欄標題) */
             thead th {
                 position: sticky;
                 top: 0;
                 z-index: 100;
                 background-color: #f8fafc;
+                color: #34495e;
                 font-weight: bold;
             }
-            /* 2. 電腦版取消 A 欄凍結 */
+            /* 2. 電腦版不凍結 A 欄 */
             th:first-child, td:first-child {
                 position: static;
-                width: auto;
+                background-color: #f8fafc;
+                min-width: 72px; 
+                width: 72px;
             }
+            td:first-child { background-color: #fff; }
         }
 
-        /* --- 手機版樣式 (螢幕寬度不足需滑動時) --- */
+        /* --- 手機版樣式 (螢幕寬度 <= 850px) --- */
         @media (max-width: 850px) {
             .content-section { padding: 10px 5px; }
-            th, td { padding: 10px 6px; }
+            th, td { padding: 10px 6px; font-size: 13px; } 
 
-            /* 1. 手機版取消標題列凍結 (向下捲動時會消失) */
+            /* 1. 手機版不凍結標題列 */
             thead th {
                 position: static;
             }
 
-            /* 2. 手機版凍結 A 欄 (班級) (左右滑動時固定) */
+            /* 2. 手機版凍結 A 欄 (班級) */
             th:first-child, td:first-child {
                 position: sticky;
                 left: 0;
@@ -104,7 +107,6 @@
                 background-color: #f8fafc;
                 min-width: 72px; 
                 width: 72px;
-                border-right: 1px solid var(--border-color);
             }
             td:first-child { background-color: #fff; }
         }
@@ -128,7 +130,7 @@
         .btn-submit { background-color: var(--google-purple); color: white; padding: 14px 30px; border: none; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
         
         #submit-status { margin-top: 15px; padding: 15px; display: none; border-radius: 8px; text-align: center; font-weight: bold; }
-        #loading-text { text-align: center; padding: 20px; color: #95a5a6; display: none; }
+        #loading-text { text-align: center; padding: 10px; color: #95a5a6; display: none; }
     </style>
 </head>
 <body>
@@ -200,6 +202,7 @@
     </div>
 
     <script>
+        // --- 設定區 ---
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzeAn6JE-EnI8ZgSHyHckTf2vWQGR-rA-NUrxuZCXeUbKZYcrUT6GVYPDhBU0QtIluD/exec"; 
         const SHEET_ID = '179cZdIStY7za1WDwqGtA302kO1Llws0NHXRW69lOfB0';
         const SHEET_NAME = '防災統計回報';
