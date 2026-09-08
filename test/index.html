@@ -48,28 +48,28 @@
 
         .btn-refresh { width: 100%; padding: 14px; background: #27ae60; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; margin-bottom: 15px; cursor: pointer; }
 
-        /* --- 修正表格：標題凍結、首欄凍結、邊框一致性 --- */
+        /* --- 修正表格：僅保留頂部標題凍結，取消首欄凍結 --- */
         .table-container { 
             overflow: auto; 
-            max-height: 70vh; /* 凍結標題的核心：限制容器高度 */
+            max-height: 70vh; 
             background: white; 
             border-radius: 10px; 
             box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+            border: 1px solid var(--border-color);
         }
         
-        table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 850px; } 
+        table { width: 100%; border-collapse: collapse; border-spacing: 0; min-width: 850px; } 
 
-        /* 基礎單元格設定 */
+        /* 基礎單元格設定：統一 1px 灰色線體 */
         th, td { 
-            border-right: 1px solid var(--border-color); 
-            border-bottom: 1px solid var(--border-color); 
+            border: 1px solid var(--border-color); 
             padding: 12px 8px; 
             text-align: center; 
             font-size: 14px; 
             background: white;
         }
 
-        /* 1. 凍結標題列 (上下移動時固定) */
+        /* 1. 凍結標題列 (僅垂直滾動時固定在頂部) */
         thead th {
             position: sticky;
             top: 0;
@@ -77,34 +77,23 @@
             background-color: #f8fafc;
             color: #34495e;
             font-weight: bold;
+            border-top: none;
         }
 
-        /* 2. 凍結首欄：班級 (左右移動時固定) */
+        /* 2. 班級首欄設定：取消 position: sticky */
         th:first-child, td:first-child {
-            position: sticky;
-            left: 0;
-            z-index: 10;
             background-color: #f8fafc;
-            /* 寬度縮減 90% (原約 80px -> 72px) */
             min-width: 72px; 
             width: 72px;
-            /* 修正灰色線：與其他格線一致 */
-            border-right: 1px solid var(--border-color); 
+            /* 班級欄位在標題列時的特殊背景 */
         }
         td:first-child { background-color: #fff; }
-
-        /* 3. 左上角第一格：班級標題 (雙向固定) */
-        thead th:first-child {
-            z-index: 150;
-            top: 0;
-            left: 0;
-            background-color: #f1f5f9;
-        }
 
         /* 手機端樣式微調 */
         @media (max-width: 600px) {
             .content-section { padding: 10px 5px; }
-            th, td { padding: 10px 6px; } 
+            th, td { padding: 10px 4px; font-size: 13px; } 
+            table { min-width: 750px; } /* 手機端適度縮減最小寬度，增加滑動順暢度 */
         }
 
         /* --- 表單設計：星號變紅 --- */
@@ -141,7 +130,6 @@
         <button class="btn-refresh" onclick="fetchSheetData()">🔄 更新統計資料</button>
         <div id="loading-text">⚡ 正在抓取最新數據...</div>
         
-        <!-- 最上方統計資料 (滑動表格時需維持顯示) -->
         <div class="summary-grid">
             <div class="summary-card"><div class="summary-label">全校應到人數</div><div id="j3-val" class="summary-value">-</div></div>
             <div class="summary-card"><div class="summary-label">已請假人數</div><div id="j5-val" class="summary-value" style="color: #c0392b;">-</div></div>
@@ -150,7 +138,6 @@
             <div class="summary-card highlight"><div class="summary-label">失蹤人數</div><div id="j11-val" class="summary-value" style="color: #c0392b;">-</div></div>
         </div>
 
-        <!-- 可滑動表格區域 -->
         <div class="table-container">
             <table>
                 <thead id="table-head"></thead>
