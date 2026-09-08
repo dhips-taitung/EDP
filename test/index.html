@@ -18,8 +18,6 @@
             padding: 0;
             background-color: var(--bg-color);
             color: #333;
-            scroll-behavior: smooth;
-            /* 修正 iOS 滑動流暢度 */
             -webkit-overflow-scrolling: touch;
         }
 
@@ -52,15 +50,30 @@
             border-bottom: 4px solid #3498db;
         }
 
+        /* 分頁容器優化：解決 iOS 隱藏 iframe 失效問題 */
         .content-section {
-            display: none;
             padding: 15px;
             max-width: 1100px;
             margin: 0 auto;
+            transition: opacity 0.3s ease;
         }
 
-        .content-section.active {
-            display: block;
+        /* 隱藏狀態：改用移出螢幕而非 display:none */
+        .content-hidden {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+            z-index: -1;
+            height: 0;
+            overflow: hidden;
+        }
+
+        .content-active {
+            position: relative;
+            opacity: 1;
+            pointer-events: auto;
+            z-index: 1;
+            height: auto;
         }
 
         /* 統計卡片 */
@@ -80,22 +93,9 @@
             border-top: 5px solid #3498db;
         }
 
-        .summary-card.highlight {
-            border-top-color: #e74c3c;
-        }
-
-        .summary-label {
-            font-size: 13px;
-            color: #7f8c8d;
-            margin-bottom: 8px;
-            font-weight: bold;
-        }
-
-        .summary-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: var(--primary-color);
-        }
+        .summary-card.highlight { border-top-color: #e74c3c; }
+        .summary-label { font-size: 13px; color: #7f8c8d; margin-bottom: 8px; font-weight: bold; }
+        .summary-value { font-size: 24px; font-weight: bold; color: var(--primary-color); }
 
         /* 更新按鈕 */
         .btn-refresh {
@@ -112,9 +112,18 @@
             box-shadow: 0 4px 0 #1e8449;
         }
 
-        .btn-refresh:active {
-            transform: translateY(2px);
-            box-shadow: 0 2px 0 #1e8449;
+        /* 外部開啟按鈕 (解決 iOS 跨網域 Cookie 封鎖問題) */
+        .btn-external {
+            display: block;
+            text-decoration: none;
+            text-align: center;
+            background: #3498db;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            font-size: 14px;
         }
 
         /* 表格容器 */
@@ -126,63 +135,40 @@
             margin-bottom: 30px;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 1000px;
-        }
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        th, td { border: 1px solid #edf2f7; padding: 12px 8px; text-align: center; font-size: 14px; }
+        th { background-color: #f8fafc; color: #34495e; white-space: nowrap; }
 
-        th, td {
-            border: 1px solid #edf2f7;
-            padding: 12px 8px;
-            text-align: center;
-            font-size: 14px;
-        }
-
-        th {
-            background-color: #f8fafc;
-            color: #34495e;
-            white-space: nowrap;
-        }
-
-        /* 表單頁滑動優化 (針對 iOS 與 LINE) */
+        /* 表單頁滑動優化 */
         .form-wrapper {
             width: 100%;
-            overflow: auto;
-            -webkit-overflow-scrolling: touch; /* 核心修正：強制 iOS 滾動流暢 */
+            -webkit-overflow-scrolling: touch;
         }
 
         #google-form-iframe {
             width: 100%;
-            min-height: 100%;
+            min-height: 700px; /* 確保初始有高度 */
             height: 2200px; 
             border: none;
             display: block;
         }
 
         @media (max-width: 600px) {
-            #google-form-iframe {
-                height: 2600px; /* 手機端長度補償 */
-            }
+            #google-form-iframe { height: 2600px; }
         }
 
-        #loading-text {
-            text-align: center;
-            padding: 20px;
-            color: #95a5a6;
-            display: none;
-        }
+        #loading-text { text-align: center; padding: 20px; color: #95a5a6; display: none; }
     </style>
 </head>
 <body>
 
     <div class="nav-tabs">
-        <button class="tab-btn active" onclick="openTab('report')">📊 防災統計回報</button>
-        <button class="tab-btn" onclick="openTab('form')">📝 表單填寫</button>
+        <button id="btn-report" class="tab-btn active" onclick="openTab('report')">📊 防災統計回報</button>
+        <button id="btn-form" class="tab-btn" onclick="openTab('form')">📝 表單填寫</button>
     </div>
 
     <!-- 分頁 1: 統計回報 -->
-    <div id="report" class="content-section active">
+    <div id="report" class="content-section content-active">
         <button class="btn-refresh" onclick="fetchSheetData()">🔄 更新統計資料</button>
         
         <div id="loading-text">資料讀取中...</div>
@@ -219,12 +205,15 @@
     </div>
 
     <!-- 分頁 2: 表單填寫 -->
-    <div id="form" class="content-section">
+    <div id="form" class="content-section content-hidden">
+        <!-- 針對 iOS 使用者的防錯按鈕 -->
+        <a href="https://docs.google.com/forms/d/e/1FAIpQLSeAjANhLbeBUucLKlwIBEo3qAtZCVoMfjUFSgkObdBp9JbEJg/viewform" target="_blank" class="btn-external">
+            若下方表單顯示空白，請點此開啟外部連結
+        </a>
+
         <div class="form-wrapper">
-            <!-- 初始不給 src，由 JS 在切換時給予，解決 iOS 空白問題 -->
             <iframe id="google-form-iframe" 
-                    src="" 
-                    data-src="https://docs.google.com/forms/d/e/1FAIpQLSeAjANhLbeBUucLKlwIBEo3qAtZCVoMfjUFSgkObdBp9JbEJg/viewform?embedded=true" 
+                    src="https://docs.google.com/forms/d/e/1FAIpQLSeAjANhLbeBUucLKlwIBEo3qAtZCVoMfjUFSgkObdBp9JbEJg/viewform?embedded=true" 
                     frameborder="0" 
                     marginheight="0" 
                     marginwidth="0" 
@@ -239,23 +228,32 @@
 
         const COLUMN_HEADERS = ["班級", "男生", "女生", "應到人數", "實到人數", "已請假人數", "未到校人數", "失蹤人數", "失蹤學生名單"];
 
-        // 分頁切換
+        // 修改分頁切換邏輯，不使用 display: none
         function openTab(tabId) {
-            document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            
-            document.getElementById(tabId).classList.add('active');
-            event.currentTarget.classList.add('active');
-            
-            // 核心修正：針對 iOS 空白問題
-            // 當使用者點擊「表單填寫」時，檢查 iframe 是否已加載，若無則賦予 src
-            if (tabId === 'form') {
+            const reportSec = document.getElementById('report');
+            const formSec = document.getElementById('form');
+            const btnReport = document.getElementById('btn-report');
+            const btnForm = document.getElementById('btn-form');
+
+            if (tabId === 'report') {
+                reportSec.className = 'content-section content-active';
+                formSec.className = 'content-section content-hidden';
+                btnReport.classList.add('active');
+                btnForm.classList.remove('active');
+            } else {
+                reportSec.className = 'content-section content-hidden';
+                formSec.className = 'content-section content-active';
+                btnReport.classList.remove('active');
+                btnForm.classList.add('active');
+                
+                // 修正 iOS 可能的渲染延遲：切換時強制重新計算高度
                 const iframe = document.getElementById('google-form-iframe');
-                if (iframe.src === "" || iframe.src === window.location.href) {
-                    iframe.src = iframe.getAttribute('data-src');
+                if (iframe.style.height === '2200px') {
+                    iframe.style.height = '2201px'; 
+                } else {
+                    iframe.style.height = '2200px';
                 }
             }
-
             window.scrollTo(0, 0); 
         }
 
@@ -272,51 +270,38 @@
         async function fetchSheetData() {
             const loader = document.getElementById('loading-text');
             loader.style.display = 'block';
-
             try {
                 const response = await fetch(DATA_URL, { cache: "no-store" });
-                if (!response.ok) throw new Error('Network response was not ok');
                 const csvText = await response.text();
                 const data = parseCSV(csvText);
-
                 renderStats(data);
                 renderTable(data);
             } catch (error) {
                 console.error('Error:', error);
-                alert('讀取失敗，請確認網路連線。');
             } finally {
                 loader.style.display = 'none';
             }
         }
 
         function renderStats(rows) {
-            const getVal = (rowNum) => {
-                return (rows[rowNum-1] && rows[rowNum-1][9]) ? rows[rowNum-1][9] : '0';
-            };
-            
-            document.getElementById('j3-val').innerText = getVal(4);   // 全校應到 (J4)
-            document.getElementById('j5-val').innerText = getVal(6);   // 已請假 (J6)
-            document.getElementById('j7-val').innerText = getVal(8);   // 未到校 (J8)
-            document.getElementById('j9-val').innerText = getVal(10);  // 全校實到 (J10)
-            document.getElementById('j11-val').innerText = getVal(12); // 失蹤人數 (J12)
+            const getVal = (rowNum) => (rows[rowNum-1] && rows[rowNum-1][9]) ? rows[rowNum-1][9] : '0';
+            document.getElementById('j3-val').innerText = getVal(4);   // J4
+            document.getElementById('j5-val').innerText = getVal(6);   // J6
+            document.getElementById('j7-val').innerText = getVal(8);   // J8
+            document.getElementById('j9-val').innerText = getVal(10);  // J10
+            document.getElementById('j11-val').innerText = getVal(12); // J12
         }
 
         function renderTable(rows) {
             const thead = document.getElementById('table-head');
             const tbody = document.getElementById('table-body');
-            thead.innerHTML = '';
-            tbody.innerHTML = '';
+            thead.innerHTML = ''; tbody.innerHTML = '';
 
             const hr = document.createElement('tr');
-            COLUMN_HEADERS.forEach(headerText => {
-                const th = document.createElement('th');
-                th.innerText = headerText;
-                hr.appendChild(th);
-            });
+            COLUMN_HEADERS.forEach(h => { const th = document.createElement('th'); th.innerText = h; hr.appendChild(th); });
             thead.appendChild(hr);
 
             const maxRows = Math.min(rows.length, 26); 
-
             for (let i = 1; i < maxRows; i++) {
                 if (!rows[i] || rows[i].length === 0) continue;
                 const tr = document.createElement('tr');
