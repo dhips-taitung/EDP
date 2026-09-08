@@ -12,6 +12,7 @@
             --card-bg: #ffffff;
             --google-purple: #673ab7;
             --required-red: #d93025;
+            --border-color: #edf2f7;
         }
 
         body, html {
@@ -47,50 +48,69 @@
 
         .btn-refresh { width: 100%; padding: 14px; background: #27ae60; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; margin-bottom: 15px; cursor: pointer; }
 
-        /* --- 修正統計資料表格：凍結首欄+水平滑動 --- */
+        /* --- 修正表格：標題凍結、首欄凍結、邊框一致性 --- */
         .table-container { 
-            overflow-x: auto; /* 開啟水平滑動 */
+            overflow: auto; 
+            max-height: 70vh; /* 凍結標題的核心：限制容器高度 */
             background: white; 
             border-radius: 10px; 
             box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
-            position: relative;
         }
         
-        table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 800px; } 
+        table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 850px; } 
+
+        /* 基礎單元格設定 */
         th, td { 
-            border-right: 1px solid #edf2f7; 
-            border-bottom: 1px solid #edf2f7; 
-            padding: 12px 10px; 
+            border-right: 1px solid var(--border-color); 
+            border-bottom: 1px solid var(--border-color); 
+            padding: 12px 8px; 
             text-align: center; 
             font-size: 14px; 
             background: white;
         }
 
-        /* 凍結首欄：班級 */
+        /* 1. 凍結標題列 (上下移動時固定) */
+        thead th {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background-color: #f8fafc;
+            color: #34495e;
+            font-weight: bold;
+        }
+
+        /* 2. 凍結首欄：班級 (左右移動時固定) */
         th:first-child, td:first-child {
             position: sticky;
             left: 0;
             z-index: 10;
             background-color: #f8fafc;
-            border-right: 2px solid #ddd; /* 增加邊界感 */
-            min-width: 80px;
+            /* 寬度縮減 90% (原約 80px -> 72px) */
+            min-width: 72px; 
+            width: 72px;
+            /* 修正灰色線：與其他格線一致 */
+            border-right: 1px solid var(--border-color); 
         }
-        td:first-child { background-color: white; }
+        td:first-child { background-color: #fff; }
 
-        th { background-color: #f8fafc; color: #34495e; font-weight: bold; }
+        /* 3. 左上角第一格：班級標題 (雙向固定) */
+        thead th:first-child {
+            z-index: 150;
+            top: 0;
+            left: 0;
+            background-color: #f1f5f9;
+        }
 
         /* 手機端樣式微調 */
         @media (max-width: 600px) {
             .content-section { padding: 10px 5px; }
-            th, td { padding: 12px 8px; } /* 保持標準字體大小，增加點擊空間 */
+            th, td { padding: 10px 6px; } 
         }
 
-        /* --- 表單設計：刪除標題區、星號變紅 --- */
-        .custom-form { max-width: 640px; margin: 0 auto; padding-top: 10px; }
+        /* --- 表單設計：星號變紅 --- */
+        .custom-form { max-width: 640px; margin: 0 auto; padding-top: 5px; }
         .form-card { background: white; border: 1px solid #dadce0; border-radius: 8px; padding: 20px; margin-bottom: 12px; }
         .form-label { display: block; font-weight: bold; margin-bottom: 8px; font-size: 16px; }
-        
-        /* 必填星號設為紅色 */
         .form-label span { color: var(--required-red); font-size: 18px; margin-left: 3px; }
 
         input[type="text"], input[type="number"], input[type="email"], select {
@@ -119,8 +139,9 @@
     <!-- 分頁 1: 統計回報 -->
     <div id="report" class="content-section active">
         <button class="btn-refresh" onclick="fetchSheetData()">🔄 更新統計資料</button>
-        <div id="loading-text">⚡ 正在從試算表抓取即時數據...</div>
+        <div id="loading-text">⚡ 正在抓取最新數據...</div>
         
+        <!-- 最上方統計資料 (滑動表格時需維持顯示) -->
         <div class="summary-grid">
             <div class="summary-card"><div class="summary-label">全校應到人數</div><div id="j3-val" class="summary-value">-</div></div>
             <div class="summary-card"><div class="summary-label">已請假人數</div><div id="j5-val" class="summary-value" style="color: #c0392b;">-</div></div>
@@ -129,6 +150,7 @@
             <div class="summary-card highlight"><div class="summary-label">失蹤人數</div><div id="j11-val" class="summary-value" style="color: #c0392b;">-</div></div>
         </div>
 
+        <!-- 可滑動表格區域 -->
         <div class="table-container">
             <table>
                 <thead id="table-head"></thead>
@@ -137,11 +159,10 @@
         </div>
     </div>
 
-    <!-- 分頁 2: 表單填寫 (已刪除標題框) -->
+    <!-- 分頁 2: 表單填寫 -->
     <div id="form" class="content-section">
         <div class="custom-form">
             <form id="main-form" onsubmit="handleFinalSubmit(event)">
-                <!-- 電子郵件 -->
                 <div class="form-card">
                     <label class="form-label">電子郵件 (選填)</label>
                     <input type="email" id="email" placeholder="您的電子郵件">
@@ -150,7 +171,6 @@
                     </label>
                 </div>
 
-                <!-- 班級 -->
                 <div class="form-card">
                     <label class="form-label">班級 <span>*</span></label>
                     <select id="class_name" required>
@@ -158,19 +178,16 @@
                     </select>
                 </div>
 
-                <!-- 已請假人數 -->
                 <div class="form-card">
                     <label class="form-label">已請假人數 <span>*</span></label>
                     <input type="number" id="leave_count" required placeholder="數字，無則填0" min="0">
                 </div>
 
-                <!-- 未到校人數 -->
                 <div class="form-card">
                     <label class="form-label">未到校人數 <span>*</span></label>
                     <input type="number" id="absent_count" required placeholder="數字，無則填0" min="0">
                 </div>
 
-                <!-- 失蹤學生座號 -->
                 <div class="form-card">
                     <label class="form-label">失蹤學生座號</label>
                     <input type="text" id="missing_seats" placeholder="座號請以逗號分隔">
@@ -183,14 +200,13 @@
     </div>
 
     <script>
-        // --- 請更換為您的 GAS 部署網址 ---
+        // --- 設定區 ---
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzeAn6JE-EnI8ZgSHyHckTf2vWQGR-rA-NUrxuZCXeUbKZYcrUT6GVYPDhBU0QtIluD/exec"; 
         const SHEET_ID = '179cZdIStY7za1WDwqGtA302kO1Llws0NHXRW69lOfB0';
         const SHEET_NAME = '防災統計回報';
         const getDataUrl = () => `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}&t=${Date.now()}`;
         const COLUMN_HEADERS = ["班級", "男生", "女生", "應到", "實到", "請假", "未到", "失蹤", "失蹤名單"];
 
-        // 載入本地記憶信箱
         function loadSavedEmail() {
             const savedEmail = localStorage.getItem('dhips_saved_email');
             if (savedEmail) {
@@ -199,7 +215,6 @@
             }
         }
 
-        // 班級生成
         function generateClasses() {
             const select = document.getElementById('class_name');
             const gMap = ["一", "二", "三", "四", "五", "六"];
@@ -219,17 +234,14 @@
             window.scrollTo(0, 0);
         }
 
-        // 提交表單
         async function handleFinalSubmit(e) {
             e.preventDefault();
             const btn = document.getElementById('submit-btn');
             const status = document.getElementById('submit-status');
-            const form = document.getElementById('main-form');
             
             btn.disabled = true;
             btn.innerText = "發送中...";
 
-            // 處理記憶信箱
             const emailValue = document.getElementById('email').value;
             if (document.getElementById('remember-email').checked && emailValue) {
                 localStorage.setItem('dhips_saved_email', emailValue);
@@ -245,30 +257,24 @@
             params.append("missing_seats", document.getElementById('missing_seats').value);
 
             try {
-                // 執行提交
                 await fetch(GAS_URL, { method: "POST", mode: "no-cors", body: params });
-                
                 status.style.display = "block";
                 status.style.backgroundColor = "#e6f4ea";
                 status.style.color = "#137333";
                 status.innerText = "✓ 填報成功！";
 
-                // 修正「還原輸入」問題：手動清空非記憶欄位並切換
                 setTimeout(() => {
                     status.style.display = "none";
-                    
-                    // 只清空人數與班級，保留 Email 狀態
                     document.getElementById('class_name').value = "";
                     document.getElementById('leave_count').value = "";
                     document.getElementById('absent_count').value = "";
                     document.getElementById('missing_seats').value = "";
-                    
                     btn.disabled = false;
                     btn.innerText = "發送報表";
                     openTab('report');
                     fetchSheetData();
                 }, 1200);
-            } catch (err) { alert("發生錯誤：" + err); btn.disabled = false; }
+            } catch (err) { alert("錯誤：" + err); btn.disabled = false; }
         }
 
         async function fetchSheetData() {
@@ -301,9 +307,11 @@
             const thead = document.getElementById('table-head');
             const tbody = document.getElementById('table-body');
             thead.innerHTML = ''; tbody.innerHTML = '';
+            
             const hr = document.createElement('tr');
             COLUMN_HEADERS.forEach(h => { let th = document.createElement('th'); th.innerText = h; hr.appendChild(th); });
             thead.appendChild(hr);
+
             const maxRows = Math.min(rows.length, 26);
             for (let i = 1; i < maxRows; i++) {
                 if (!rows[i] || rows[i].length < 2) continue;
