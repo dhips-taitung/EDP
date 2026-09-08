@@ -48,55 +48,68 @@
 
         .btn-refresh { width: 100%; padding: 14px; background: #27ae60; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; margin-bottom: 15px; cursor: pointer; }
 
-        /* --- 修正表格：僅保留頂部標題凍結，取消首欄凍結 --- */
+        /* --- 表格容器設定 --- */
         .table-container { 
             overflow: auto; 
-            max-height: 70vh; 
+            max-height: 75vh; 
             background: white; 
             border-radius: 10px; 
             box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
             border: 1px solid var(--border-color);
         }
         
-        table { width: 100%; border-collapse: collapse; border-spacing: 0; min-width: 850px; } 
+        table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 850px; } 
 
-        /* 基礎單元格設定：統一 1px 灰色線體 */
         th, td { 
-            border: 1px solid var(--border-color); 
+            border-right: 1px solid var(--border-color); 
+            border-bottom: 1px solid var(--border-color); 
             padding: 12px 8px; 
             text-align: center; 
             font-size: 14px; 
             background: white;
         }
 
-        /* 1. 凍結標題列 (僅垂直滾動時固定在頂部) */
-        thead th {
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            background-color: #f8fafc;
-            color: #34495e;
-            font-weight: bold;
-            border-top: none;
+        /* --- 電腦版樣式 (螢幕寬度足夠時) --- */
+        @media (min-width: 851px) {
+            /* 1. 電腦版標題凍結 */
+            thead th {
+                position: sticky;
+                top: 0;
+                z-index: 100;
+                background-color: #f8fafc;
+                font-weight: bold;
+            }
+            /* 2. 電腦版取消 A 欄凍結 */
+            th:first-child, td:first-child {
+                position: static;
+                width: auto;
+            }
         }
 
-        /* 2. 班級首欄設定：取消 position: sticky */
-        th:first-child, td:first-child {
-            background-color: #f8fafc;
-            min-width: 72px; 
-            width: 72px;
-            /* 班級欄位在標題列時的特殊背景 */
-        }
-        td:first-child { background-color: #fff; }
-
-        /* 手機端樣式微調 */
-        @media (max-width: 600px) {
+        /* --- 手機版樣式 (螢幕寬度不足需滑動時) --- */
+        @media (max-width: 850px) {
             .content-section { padding: 10px 5px; }
-            th, td { padding: 10px 4px; font-size: 13px; } 
-            table { min-width: 750px; } /* 手機端適度縮減最小寬度，增加滑動順暢度 */
+            th, td { padding: 10px 6px; }
+
+            /* 1. 手機版取消標題列凍結 (向下捲動時會消失) */
+            thead th {
+                position: static;
+            }
+
+            /* 2. 手機版凍結 A 欄 (班級) (左右滑動時固定) */
+            th:first-child, td:first-child {
+                position: sticky;
+                left: 0;
+                z-index: 10;
+                background-color: #f8fafc;
+                min-width: 72px; 
+                width: 72px;
+                border-right: 1px solid var(--border-color);
+            }
+            td:first-child { background-color: #fff; }
         }
 
-        /* --- 表單設計：星號變紅 --- */
+        /* --- 表單設計 --- */
         .custom-form { max-width: 640px; margin: 0 auto; padding-top: 5px; }
         .form-card { background: white; border: 1px solid #dadce0; border-radius: 8px; padding: 20px; margin-bottom: 12px; }
         .form-label { display: block; font-weight: bold; margin-bottom: 8px; font-size: 16px; }
@@ -115,7 +128,7 @@
         .btn-submit { background-color: var(--google-purple); color: white; padding: 14px 30px; border: none; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
         
         #submit-status { margin-top: 15px; padding: 15px; display: none; border-radius: 8px; text-align: center; font-weight: bold; }
-        #loading-text { text-align: center; padding: 10px; color: #95a5a6; display: none; }
+        #loading-text { text-align: center; padding: 20px; color: #95a5a6; display: none; }
     </style>
 </head>
 <body>
@@ -187,7 +200,6 @@
     </div>
 
     <script>
-        // --- 設定區 ---
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzeAn6JE-EnI8ZgSHyHckTf2vWQGR-rA-NUrxuZCXeUbKZYcrUT6GVYPDhBU0QtIluD/exec"; 
         const SHEET_ID = '179cZdIStY7za1WDwqGtA302kO1Llws0NHXRW69lOfB0';
         const SHEET_NAME = '防災統計回報';
